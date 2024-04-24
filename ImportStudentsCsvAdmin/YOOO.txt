@@ -1,6 +1,1 @@
-<<<<<<< HEAD
-YOOOOOooo
-=======
-YOOOOO
-yo
->>>>>>> 85a525eb0257e6bbfaae7db5fa9b0b2a4fa7d3de
+YOO
