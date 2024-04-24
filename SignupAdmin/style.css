@@ -9,10 +9,19 @@
 .container{
     width: 100%;
     height: 100vh;
-    background-color: rgba(164, 203, 236, 0.938);
+    background: url(Login\ Bg.jpg) no-repeat;
     background-position: center;
     background-size: cover;
     position: relative;
+}
+
+.mmu_logo{
+    width: 400px;
+    height: 200px;
+    background-image: url(logo_mmu.png);
+    background-size: 50%;
+    background-repeat: no-repeat;
+    background-position: top left;
 }
 
 .form_box{
@@ -24,13 +33,15 @@
     transform: translate(-50%,-50%);
     background: #fff;
     padding: 50px 60px 70px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, .2);
+    border-radius: 20px;
     text-align: center;
 }
 
 .form_box h1{
     font-size: 30px;
     margin-bottom: 60px;
-    color: rgb(20, 40, 95);
+    color: rgb(0, 0, 0);
     position: relative;
 }
 .form_box h1::after{
@@ -38,7 +49,7 @@
     width: 30px;
     height: 4px;
     border-radius: 3px;
-    background: rgb(20, 40, 95);
+    background: rgb(0, 0, 0);
     position: absolute;
     bottom: -12px;
     left: 50%;
@@ -65,7 +76,7 @@ input{
 }
 .btn_field button{
     flex-basis: 48%;
-    background: rgb(20, 40, 95);
+    background: rgb(0, 0, 0);
     color: #fff;
     height: 30px;
     border-radius: 10px;
