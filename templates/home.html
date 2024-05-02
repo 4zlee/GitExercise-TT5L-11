@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Page</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style_HomePage.css') }}">
+</head>
+
+<body>
+    <header class="header">
+        <a href='#' class="logo"><img src="/static/MMUlogo.png" alt="MMU Logo" style="width:50%;height:auto;"></a>
+
+        <nav class ="navbar">
+            <a href="#">Home</a>
+            <a href="#">Evaluation</a>
+            <a href="{{ url_for('login_post')}}">Logout</a>
+        </nav>
+    </header>
+</body>
