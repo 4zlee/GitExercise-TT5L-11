@@ -24,16 +24,29 @@ body {
     left: 0;
     width: 100%;
     padding: 10px 30px;
-    background: transparent;
+    background: color(transparent);
     display: flex;
     justify-content: space-between;
     z-index: 90;
 }
 
+.message {
+    font-size: 36px;
+    text-align: center;
+}
+  
+.MMU-logo {
+      padding-top: 1%;
+      padding-left: 0%;
+      position: fixed;
+      top: 0;
+      left: 0;
+}
+
 .navbar a {
     position: relative;
     font-size: 18px;
-    color: white;
+    color: black;
     font-weight: 500;
     text-decoration: none;
     margin-left: 40px;
@@ -46,21 +59,10 @@ body {
   left: 0;
   width: 0;
   height: 2px;
-  background: white;
+  background: black;
   transition: .3s;
 }
 
 .navbar a:hover::before {
     width: 100%;
-}
-
-.MMU-logo {
-    padding-top: 1%;
-    padding-left: 1%;
-    top: 0;
-    left: 0;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    padding: 5px;
-    width: 150px;
 }
