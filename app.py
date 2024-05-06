@@ -68,10 +68,10 @@ def signup_post():
         flash('User ID is already in use', 'error')
         return redirect(url_for('signup'))
 
-    hashed_password = hash_password(password)
+    #hashed_password = hash_password(password)
 
     cursor.execute("INSERT INTO Users (user_id, name, password, email) VALUES (?, ?, ?, ?)",
-                   (user_id, name, hashed_password, user_id + '@example.com')) 
+                   (user_id, name,password, user_id + '@example.com')) 
     conn.commit()
 
     cursor.execute("SELECT role_id FROM Roles WHERE role_name = ?", (role,))

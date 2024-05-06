@@ -12,7 +12,7 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    background: url(../Img/LoginBg.jpg) no-repeat;
+    background: url(LoginBg.jpg) no-repeat;
     background-size: cover;
     background-position: center;
     image-resolution: 1080;
@@ -58,7 +58,7 @@ body {
     transform: translate(-50%);
 }
 .input_field{
-    background-color: rgba(245, 245, 245, 0.993);
+    background-color: rgb(245, 245, 245);
     margin:  15px 0;
     border-radius: 3px;
     display: flex;
@@ -72,7 +72,7 @@ input{
     padding: 15px 3px;
 }
 .btn_field{
-    width: 80%;
+    width: 100%;
     display: flex;
     justify-content: space-between;
 }
@@ -81,10 +81,26 @@ input{
     background: rgb(255, 255, 255);
     box-shadow: 0 0 10px rgba(0, 0, 0, .2);
     color: #000000;
-    height: 50px;
+    height: 40px;
     border-radius: 30px;
     border: 0;
     outline: 0;
     cursor: pointer;
-    transform: translate(80%,40%);
+    transform: translate(50%,8%);
+}
+
+.wrapper .login_link {
+    font-size: 14.5px;
+    text-align: center;
+    margin: 20px 0 15px;
+}
+
+.login_link p a {
+    color: blue;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.login_link p a:hover {
+    text-decoration: underline;
 }
