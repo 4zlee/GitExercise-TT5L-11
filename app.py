@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, session, redirect, url_for, flash
 import sqlite3
 import hashlib
 
@@ -19,6 +19,24 @@ def hash_password(password):
 def index():
     return redirect(url_for('login'))
 
+@app.route('/home_stu')
+def home_stu():
+    if "user_id" in session:
+        user_id = session["user_id"]
+        user_name = get_user_name(user_id)
+        return render_template('home_stu.html', user_name=user_name)
+    else:
+        return redirect(url_for('login'))
+
+@app.route('/home_lec')
+def home_lec():
+    if "user_id" in session:
+        user_id = session["user_id"]
+        user_name = get_user_name(user_id)
+        return render_template('home_lec.html', user_name=user_name)
+    else:
+        return redirect(url_for('login'))
+
 @app.route('/login')
 def login():
     return render_template('login.html')
@@ -35,14 +53,34 @@ def login_post():
 
     if user:
         if user['password'] == password:
-            flash('Login successful!', 'success')
-            return redirect(url_for('dashboard'))
+            session["user_id"] = user_id
+            role_id = get_user_role_id(user_id)
+            if role_id == 1:
+                return redirect(url_for('home_stu'))
+            else:
+                return redirect(url_for('home_lec'))
         else:
-            flash('Incorrect password', 'error')
+            flash('Incorrect password', 'danger')
             return redirect(url_for('login'))
     else:
-        flash('User not found', 'error')
+        flash('User not found', 'danger')
         return redirect(url_for('login'))
+
+def get_user_role_id(user_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT role_id FROM User_roles WHERE user_id = ?", (user_id,))
+    role_id = cursor.fetchone()['role_id']
+    conn.close()
+    return role_id
+
+def get_user_name(user_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT name FROM Users WHERE user_id = ?", (user_id,))
+    user_name = cursor.fetchone()['name']
+    conn.close()
+    return user_name
 
 @app.route('/signup')
 def signup():
@@ -53,6 +91,7 @@ def signup_post():
     name = request.form['name']
     user_id = request.form['user_id']
     password = request.form['password']
+    email = request.form['email']
     role = request.form['role']
 
     if not name or not user_id or not password:
@@ -65,13 +104,14 @@ def signup_post():
     existing_user = cursor.fetchone()
 
     if existing_user:
-        flash('User ID is already in use', 'error')
+        flash('User ID is already in use', 'danger')
         return redirect(url_for('signup'))
 
-    hashed_password = hash_password(password)
+    #hashed_password = hash_password(password)
 
-    cursor.execute("INSERT INTO Users (user_id, name, password, email) VALUES (?, ?, ?, ?)",
-                   (user_id, name, hashed_password, user_id + '@example.com')) 
+    cursor.execute("INSERT INTO Users (user_id, name, email, password) VALUES (?, ?, ?, ?)",
+                   (user_id, name, email, password))
+                   #(user_id, name, user_id + '@example.com', password)) 
     conn.commit()
 
     cursor.execute("SELECT role_id FROM Roles WHERE role_name = ?", (role,))
@@ -84,9 +124,10 @@ def signup_post():
     flash('Account created successfully! Please log in.', 'success')
     return redirect(url_for('login'))
 
-@app.route('/home')
-def dashboard():
-    return render_template('home.html')
+@app.route('/logout')
+def logout():
+    session.pop("user_id" , None)
+    return redirect(url_for("login"))
 
 if __name__ == '__main__':
     app.run(debug=True)
