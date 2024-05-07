@@ -96,7 +96,7 @@ input{
 }
 
 .login_link p a {
-    color: blue;
+    color: rgb(0, 0, 0);
     text-decoration: none;
     font-weight: 600;
 }
