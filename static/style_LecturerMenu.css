@@ -196,7 +196,7 @@ input{
     width: 650px;
     margin: 0px auto;
     border-collapse: collapse;
-    box-shadow: 15px 15px 6px rgba(96, 96, 96, 0.7);
+    box-shadow: 0 0 10px rgba(0, 0, 0, .1);
 }
 
 td, th{
