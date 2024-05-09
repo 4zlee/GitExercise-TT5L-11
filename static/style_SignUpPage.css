@@ -28,7 +28,7 @@ body {
 
 .form_box{
     width: 70%;
-    max-width: 350px;
+    max-width: 450px;
     position: absolute;
     top: 50%;
     left: 50%;
@@ -63,14 +63,23 @@ body {
     border-radius: 3px;
     display: flex;
     align-items: center;
+    width: 100%;
 }
 input{
-    width: 50%;
+    width: 100%;
     background: transparent;
     border: 0;
     outline: 0;
     padding: 15px 3px;
 }
+
+.selection_box{
+    background-color: rgba(245, 245, 245, 0.993);
+    border-radius: 10px;
+    width: 30%;
+    text-align: center;
+}
+
 .btn_field{
     width: 100%;
     display: flex;

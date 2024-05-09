@@ -124,6 +124,135 @@ def signup_post():
     flash('Account created successfully! Please log in.', 'success')
     return redirect(url_for('login'))
 
+@app.route('/class_add', methods=['POST', 'GET'])
+def class_add_post():
+    if request.method == 'POST':
+        class_id = request.form['class_id']
+        class_name = request.form['class_name']
+        lecturer_id = session['user_id']  # Get the current lecturer's ID from the session
+
+        # Check if class already exists
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM Classes WHERE class_id = ?", (class_id,))
+        existing_class = cursor.fetchone()
+
+        if existing_class:
+            flash('Class ID is already in use', 'danger')
+            return redirect(url_for('class_add_post'))
+
+        # Insert new class into the database
+        cursor.execute("INSERT INTO Classes (class_id, class_name) VALUES (?, ?)",
+                       (class_id, class_name))
+        conn.commit()
+
+        # Assign lecturer to the class
+        cursor.execute("INSERT INTO Class_lecturers (class_id, lecturer_id) VALUES (?, ?)", (class_id, lecturer_id))
+        conn.commit()
+
+        conn.close()
+
+        flash('Class created successfully', 'success')
+        return redirect(url_for('class_add_post'))
+
+    # If GET request, render the class add form
+    return render_template('class_add.html')
+
+@app.route('/class_list')
+def class_list():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT Classes.class_id, Classes.class_name, Users.name AS lecturer_name FROM Classes INNER JOIN Class_lecturers ON Classes.class_id = Class_lecturers.class_id INNER JOIN Users ON Class_lecturers.lecturer_id = Users.user_id")
+    classes = cursor.fetchall()
+    conn.close()
+    return render_template('class_list.html', classes=classes)
+
+@app.route('/edit_class/<class_id>', methods=['GET', 'POST'])
+def edit_class(class_id):
+    if request.method == 'POST':
+        new_class_name = request.form['class_name']
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        try:
+            # Update class name in the database
+            cursor.execute("UPDATE Classes SET class_name = ? WHERE class_id = ?", (new_class_name, class_id))
+            conn.commit()
+            flash('Class updated successfully', 'success')
+        except Exception as e:
+            conn.rollback()
+            flash(f'Error updating class: {str(e)}', 'danger')
+        finally:
+            conn.close()
+        
+        return redirect(url_for('class_list'))
+    else:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        try:
+            # Retrieve class details from the database
+            cursor.execute("SELECT class_name FROM Classes WHERE class_id = ?", (class_id,))
+            class_details = cursor.fetchone()
+            class_name = class_details['class_name']
+        except Exception as e:
+            flash(f'Error retrieving class details: {str(e)}', 'danger')
+            class_name = None
+        finally:
+            conn.close()
+        
+        return render_template('edit_class.html', class_id=class_id, class_name=class_name)
+    
+@app.route('/edit_lecturer/<class_id>', methods=['GET', 'POST'])
+def edit_lecturer(class_id):
+    if request.method == 'POST':
+        new_lecturer_id = request.form['lecturer_id']
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        try:
+            # Update the lecturer for the class
+            cursor.execute("UPDATE Class_lecturers SET lecturer_id = ? WHERE class_id = ?", (new_lecturer_id, class_id))
+            conn.commit()
+            flash('Lecturer updated successfully', 'success')
+        except Exception as e:
+            conn.rollback()
+            flash(f'Error updating lecturer: {str(e)}', 'danger')
+        finally:
+            conn.close()
+        
+        return redirect(url_for('class_list'))
+    else:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        try:
+            # Retrieve all users who are lecturers
+            cursor.execute("SELECT user_id, name FROM Users INNER JOIN User_roles ON Users.user_id = User_roles.user_id WHERE User_roles.role_id = 2")
+            lecturers = cursor.fetchall()
+        except Exception as e:
+            flash(f'Error retrieving lecturers: {str(e)}', 'danger')
+            lecturers = []
+        finally:
+            conn.close()
+        
+        return render_template('edit_lecturer.html', class_id=class_id, lecturers=lecturers)
+
+    
+@app.route('/delete_class/<class_id>')
+def delete_class(class_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        # Delete class from the database
+        cursor.execute("DELETE FROM Classes WHERE class_id = ?", (class_id,))
+        conn.commit()
+        flash('Class successfully deleted', 'success')
+    except Exception as e:
+        conn.rollback()
+        flash(f'Error deleting class: {str(e)}', 'danger')
+    finally:
+        conn.close()
+    return redirect(url_for('class_list'))
+
 @app.route('/logout')
 def logout():
     session.pop("user_id" , None)
