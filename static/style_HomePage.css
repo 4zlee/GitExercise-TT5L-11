@@ -24,20 +24,52 @@ body {
     left: 0;
     width: 100%;
     padding: 10px 30px;
-    background: color(transparent);
+    background: transparent;
     display: flex;
     justify-content: space-between;
     z-index: 90;
 }
 
+.intro-text {
+    width: 420px;
+    position: relative;
+    background: white;
+    color: black;
+    border: 2px solid rgba(255, 255, 255, .2);
+    backdrop-filter: contrast(50%);
+    box-shadow: 0 0 10px rgba(0, 0, 0, .1);
+    border-radius: 10px;
+    padding: 30px 40px;
+    align-content: center;
+    margin-top: 250px;
+}
+
+.Welcome {
+    line-height: 2;
+    text-decoration: underline;
+}
+
+.Info {
+    line-height: 1.5;
+}
+
+.Note {
+    line-height: 1.5;
+}
+
 .message {
-    font-size: 36px;
+    font-size: 30px;
     text-align: center;
+    text-indent: 130px;
+    margin-top: 130px;
+    margin-left: 10px;
+    position: relative;
+    justify-content: center;
 }
   
 .MMU-logo {
       padding-top: 1%;
-      padding-left: 0%;
+      padding-left: 1%;
       position: fixed;
       top: 0;
       left: 0;
