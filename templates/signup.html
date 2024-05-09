@@ -18,9 +18,20 @@
     <div class="container">
         <div class="form_box">
             <h1>Sign up</h1>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}" role="alert">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
             <form action="/signup" method="post">
                 <div class="input_field">
-                    <input type="text" name="user_id" placeholder="User ID" required>
+                    <input type="text" name="user_id" placeholder="User ID" required pattern="L\d{9}" maxlength="10" minlength="10" oninvalid="this.setCustomValidity('Input must be 10 characters long')" oninput="this.setCustomValidity('')">
                 </div>
 
                 <div class="input_field">
@@ -28,7 +39,7 @@
                 </div>
 
                 <div class="input_field">
-                    <input type="text" name="email" placeholder="Email" required>
+                    <input type="text" name="email" placeholder="Email" required pattern="[^ @]*@[^ @]*">
                 </div>
 
                 <div class="input_field">
@@ -36,7 +47,7 @@
                 </div>
                
                 <label for="role">Choose a role</label>
-                <select name="role" id="role">
+                <select name="role" id="role" class="selection_box">
                     <option value="student">Student</option>
                     <option value="lecturer">Lecturer</option>
                 </select>
