@@ -171,10 +171,15 @@ def class_list():
 def edit_class(class_id):
     if request.method == 'POST':
         new_class_name = request.form['class_name']
+        new_lecturer = request.form['lecturer_id']
         
         conn = get_db_connection()
         cursor = conn.cursor()
         try:
+             # Update lecturer id in the database
+            cursor.execute("UPDATE Class_lecturers SET lecturer_id = ? WHERE class_id = ?", (new_lecturer, class_id))
+            conn.commit()
+
             # Update class name in the database
             cursor.execute("UPDATE Classes SET class_name = ? WHERE class_id = ?", (new_class_name, class_id))
             conn.commit()
@@ -190,6 +195,11 @@ def edit_class(class_id):
         conn = get_db_connection()
         cursor = conn.cursor()
         try:
+            # Retrieve lecturer id details from the database
+            cursor.execute("SELECT lecturer_id FROM Class_lecturers WHERE class_id = ?", (class_id,))
+            class_details = cursor.fetchone()
+            lecturer_id = class_details['lecturer_id']
+
             # Retrieve class details from the database
             cursor.execute("SELECT class_name FROM Classes WHERE class_id = ?", (class_id,))
             class_details = cursor.fetchone()
@@ -197,10 +207,11 @@ def edit_class(class_id):
         except Exception as e:
             flash(f'Error retrieving class details: {str(e)}', 'danger')
             class_name = None
+            lecturer_id = None
         finally:
             conn.close()
         
-        return render_template('edit_class.html', class_id=class_id, class_name=class_name)
+        return render_template('edit_class.html', class_id=class_id, class_name=class_name, lecturer_id=lecturer_id)
     
 @app.route('/edit_lecturer/<class_id>', methods=['GET', 'POST'])
 def edit_lecturer(class_id):
