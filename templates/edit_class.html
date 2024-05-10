@@ -11,12 +11,11 @@
 
 {% block content %}
     <div class="edit_class">
-        <h1>Edit Class</h1>
+        <h1>Edit Course</h1>
         <form method="POST" class="edit_class_form">
-            <label class="class_name" for="class_name">Class Name:</label>
+            <label class="class_name" for="class_name">Course Name:</label>
             <div class="input">
                 <input class="input_field" type="text" id="class_name" name="class_name" value="{{ class_name }}" required>
-                <input class="input_field" type="text" id="lecturer_id" name="lecturer_id" value="{{ lecturer_id }}" required>
             </div>
             <div>
                 <button type="submit" class="btn">Submit</button>
