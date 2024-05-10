@@ -1,9 +1,11 @@
 from flask import Flask, render_template, request, session, redirect, url_for, flash
 import sqlite3
 import hashlib
+import re
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
+email_pattern = r'^[\w\.-]+@[a-zA-Z0-9-]+\.[a-zA-Z]{2,}$'
 
 DATABASE = 'PEER_REVIEW_DB.db'
 
@@ -43,28 +45,31 @@ def login():
 
 @app.route('/login', methods=['POST'])
 def login_post():
-    user_id = request.form['user_id']
+    email = request.form['email']
     hashed_password = request.form['password']
+
+    if not re.match(email_pattern, email):
+        flash('Invalid email address', 'danger')
+        return redirect(url_for('login'))
 
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM Users WHERE user_id = ?", (user_id,))
+    cursor.execute("SELECT * FROM Users WHERE email = ?", (email,))
     user = cursor.fetchone()
 
     if user:
         if user['password'] == hash_password(hashed_password):
-            session["user_id"] = user_id
-            role_id = get_user_role_id(user_id)
+            session["user_id"] = user['user_id']
+            role_id = get_user_role_id(user['user_id'])
             if role_id == 1:
                 return redirect(url_for('home_stu'))
             else:
                 return redirect(url_for('home_lec'))
         else:
             flash('Incorrect password', 'danger')
-            return redirect(url_for('login'))
     else:
         flash('User not found', 'danger')
-        return redirect(url_for('login'))
+    return redirect(url_for('login'))
 
 def get_user_role_id(user_id):
     conn = get_db_connection()
