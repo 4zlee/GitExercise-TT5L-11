@@ -44,7 +44,7 @@ def login():
 @app.route('/login', methods=['POST'])
 def login_post():
     user_id = request.form['user_id']
-    password = request.form['password']
+    hashed_password = request.form['password']
 
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -52,7 +52,7 @@ def login_post():
     user = cursor.fetchone()
 
     if user:
-        if user['password'] == password:
+        if user['password'] == hash_password(hashed_password):
             session["user_id"] = user_id
             role_id = get_user_role_id(user_id)
             if role_id == 1:
@@ -107,11 +107,10 @@ def signup_post():
         flash('User ID is already in use', 'danger')
         return redirect(url_for('signup'))
 
-    #hashed_password = hash_password(password)
+    hashed_password = hash_password(password)
 
     cursor.execute("INSERT INTO Users (user_id, name, email, password) VALUES (?, ?, ?, ?)",
-                   (user_id, name, email, password))
-                   #(user_id, name, user_id + '@example.com', password)) 
+                   (user_id, name, email, hashed_password))
     conn.commit()
 
     cursor.execute("SELECT role_id FROM Roles WHERE role_name = ?", (role,))
@@ -160,26 +159,27 @@ def class_add_post():
 
 @app.route('/class_list')
 def class_list():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT Classes.class_id, Classes.class_name, Users.name AS lecturer_name FROM Classes INNER JOIN Class_lecturers ON Classes.class_id = Class_lecturers.class_id INNER JOIN Users ON Class_lecturers.lecturer_id = Users.user_id")
-    classes = cursor.fetchall()
-    conn.close()
-    return render_template('class_list.html', classes=classes)
+    lecturer_id = session.get('user_id')
+    
+    if lecturer_id:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+       
+        cursor.execute("SELECT Classes.class_id, Classes.class_name, Users.name AS lecturer_name FROM Classes INNER JOIN Class_lecturers ON Classes.class_id = Class_lecturers.class_id INNER JOIN Users ON Class_lecturers.lecturer_id = Users.user_id WHERE Users.user_id = ?", (lecturer_id,))
+        classes = cursor.fetchall()
+        conn.close()
+        return render_template('class_list.html', classes=classes)
+    else:
+        return "No user logged in"
 
 @app.route('/edit_class/<class_id>', methods=['GET', 'POST'])
 def edit_class(class_id):
     if request.method == 'POST':
         new_class_name = request.form['class_name']
-        new_lecturer = request.form['lecturer_id']
         
         conn = get_db_connection()
         cursor = conn.cursor()
         try:
-             # Update lecturer id in the database
-            cursor.execute("UPDATE Class_lecturers SET lecturer_id = ? WHERE class_id = ?", (new_lecturer, class_id))
-            conn.commit()
-
             # Update class name in the database
             cursor.execute("UPDATE Classes SET class_name = ? WHERE class_id = ?", (new_class_name, class_id))
             conn.commit()
@@ -195,11 +195,6 @@ def edit_class(class_id):
         conn = get_db_connection()
         cursor = conn.cursor()
         try:
-            # Retrieve lecturer id details from the database
-            cursor.execute("SELECT lecturer_id FROM Class_lecturers WHERE class_id = ?", (class_id,))
-            class_details = cursor.fetchone()
-            lecturer_id = class_details['lecturer_id']
-
             # Retrieve class details from the database
             cursor.execute("SELECT class_name FROM Classes WHERE class_id = ?", (class_id,))
             class_details = cursor.fetchone()
@@ -207,11 +202,10 @@ def edit_class(class_id):
         except Exception as e:
             flash(f'Error retrieving class details: {str(e)}', 'danger')
             class_name = None
-            lecturer_id = None
         finally:
             conn.close()
         
-        return render_template('edit_class.html', class_id=class_id, class_name=class_name, lecturer_id=lecturer_id)
+        return render_template('edit_class.html', class_id=class_id, class_name=class_name)
     
 @app.route('/edit_lecturer/<class_id>', methods=['GET', 'POST'])
 def edit_lecturer(class_id):
