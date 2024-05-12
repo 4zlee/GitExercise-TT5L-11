@@ -94,33 +94,35 @@ def signup():
 @app.route('/signup', methods=['POST'])
 def signup_post():
     name = request.form['name']
-    user_id = request.form['user_id']
     password = request.form['password']
     email = request.form['email']
     role = request.form['role']
 
-    if not name or not user_id or not password:
+    if not name or not password:
         flash('All fields are required', 'error')
         return redirect(url_for('signup'))
 
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM Users WHERE user_id = ?", (user_id,))
+
+    cursor.execute("SELECT * FROM Users WHERE email = ?", (email,))
     existing_user = cursor.fetchone()
 
     if existing_user:
-        flash('User ID is already in use', 'danger')
+        flash('Email is already in use', 'danger')
         return redirect(url_for('signup'))
 
     hashed_password = hash_password(password)
 
-    cursor.execute("INSERT INTO Users (user_id, name, email, password) VALUES (?, ?, ?, ?)",
-                   (user_id, name, email, hashed_password))
+    cursor.execute("INSERT INTO Users (name, email, password) VALUES (?, ?, ?)",
+                   (name, email, hashed_password))
     conn.commit()
+
+    new_user_id = cursor.lastrowid
 
     cursor.execute("SELECT role_id FROM Roles WHERE role_name = ?", (role,))
     role_id = cursor.fetchone()['role_id']
-    cursor.execute("INSERT INTO User_roles (user_id, role_id) VALUES (?, ?)", (user_id, role_id))
+    cursor.execute("INSERT INTO User_roles (user_id, role_id) VALUES (?, ?)", (new_user_id, role_id))
     conn.commit()
 
     conn.close()
