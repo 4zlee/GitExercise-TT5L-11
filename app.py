@@ -2,9 +2,29 @@ from flask import Flask, render_template, request, session, redirect, url_for, f
 import sqlite3
 import hashlib
 import re
+from flask_mail import Mail, Message
+import os
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
+
+# Flask-Mail configuration
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 465
+app.config['MAIL_USE_SSL'] = True
+app.config['MAIL_USERNAME'] = 'alexxaviera081@gmail.com'  # Lecturer's email address
+app.config['MAIL_PASSWORD'] = 'yttmlbbokdiqrnby'     # App password for lecturer's email
+
+def get_lecturer_email(lecturer_id):
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+    cursor.execute("SELECT email FROM Users WHERE user_id = ?", (lecturer_id,))
+    lecturer_email = cursor.fetchone()[0]
+    conn.close()
+    return lecturer_email
+
+mail = Mail(app)
+
 email_pattern = r'^[\w\.-]+@[a-zA-Z0-9-]+\.[a-zA-Z]{2,}$'
 
 DATABASE = 'PEER_REVIEW_DB.db'
@@ -16,6 +36,24 @@ def get_db_connection():
 
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
+
+@app.route('/send_email', methods=['POST'])
+def send_email():
+    if request.method == 'POST':
+        lecturer_id = session.get('user_id')
+        lecturer_email = get_lecturer_email(lecturer_id)
+        student_email = request.form['student_email']
+
+        # Send email to the student
+        try:
+            msg = Message('Hello from Flask', sender=lecturer_email, recipients=[student_email])
+            msg.body = 'Hi there! This is a test email sent from Flask.'
+            mail.send(msg)
+            flash('Email sent successfully!', 'success')
+        except Exception as e:
+            flash(f'Error sending email: {str(e)}', 'error')
+
+        return redirect(url_for('add_students'))
 
 @app.route('/')
 def index():
@@ -214,41 +252,6 @@ def edit_class(class_id):
         
         return render_template('edit_class.html', class_id=class_id, class_name=class_name)
     
-@app.route('/edit_lecturer/<class_id>', methods=['GET', 'POST'])
-def edit_lecturer(class_id):
-    if request.method == 'POST':
-        new_lecturer_id = request.form['lecturer_id']
-        
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        try:
-            # Update the lecturer for the class
-            cursor.execute("UPDATE Class_lecturers SET lecturer_id = ? WHERE class_id = ?", (new_lecturer_id, class_id))
-            conn.commit()
-            flash('Lecturer updated successfully', 'success')
-        except Exception as e:
-            conn.rollback()
-            flash(f'Error updating lecturer: {str(e)}', 'danger')
-        finally:
-            conn.close()
-        
-        return redirect(url_for('class_list'))
-    else:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        try:
-            # Retrieve all users who are lecturers
-            cursor.execute("SELECT user_id, name FROM Users INNER JOIN User_roles ON Users.user_id = User_roles.user_id WHERE User_roles.role_id = 2")
-            lecturers = cursor.fetchall()
-        except Exception as e:
-            flash(f'Error retrieving lecturers: {str(e)}', 'danger')
-            lecturers = []
-        finally:
-            conn.close()
-        
-        return render_template('edit_lecturer.html', class_id=class_id, lecturers=lecturers)
-
-    
 @app.route('/delete_class/<class_id>')
 def delete_class(class_id):
     conn = get_db_connection()
@@ -264,6 +267,83 @@ def delete_class(class_id):
     finally:
         conn.close()
     return redirect(url_for('class_list'))
+
+@app.route('/add_students')
+def add_students():
+    if "user_id" in session:
+        user_id = session["user_id"]
+        lecturer_email = get_lecturer_email(user_id)
+
+        # Fetch classes from the database
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT class_id, class_name FROM Classes")
+        classes = cursor.fetchall()
+
+        # Fetch groups from the database (you may need to filter by the selected class)
+        cursor.execute("SELECT group_id, group_name FROM Groups")
+        groups = cursor.fetchall()
+
+        conn.close()
+
+        return render_template('add_students.html', lecturer_email= lecturer_email , classes=classes, groups=groups)
+    else:
+        return redirect(url_for('login'))
+
+@app.route('/students_list')
+def students_list():
+   pass
+
+@app.route('/join_class/<class_id>')
+def join_class(class_id):
+    # Logic to join the class...
+    flash(f'Joined class with ID: {class_id}', 'success')
+    return redirect(url_for('home_stu'))
+
+# Route to join a group
+@app.route('/join_group/<group_id>')
+def join_group(group_id):
+    # Logic to join the group...
+    flash(f'Joined group with ID: {group_id}', 'success')
+    return redirect(url_for('home_stu'))
+
+@app.route('/add_group', methods=['GET', 'POST'])
+def add_group():
+    if request.method == 'POST':
+        class_id = request.form['class_id']
+        group_name = request.form['group_name']
+        students = request.form.getlist('students[]')
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        try:
+            # Insert new group into the database
+            cursor.execute("INSERT INTO Groups (class_id, group_name) VALUES (?, ?)", (class_id, group_name))
+            group_id = cursor.lastrowid
+
+            # Insert group members into the database
+            for student_id in students:
+                cursor.execute("INSERT INTO group_members (user_id, group_id) VALUES (?, ?)", (student_id, group_id))
+
+            conn.commit()
+            flash('Group added successfully', 'success')
+        except Exception as e:
+            conn.rollback()
+            flash(f'Error adding group: {str(e)}', 'danger')
+        finally:
+            conn.close()
+
+        return redirect(url_for('add_group'))
+
+    # If GET request, render the add group form
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT Users.user_id, Users.name FROM Users INNER JOIN User_roles ON Users.user_id = User_roles.user_id WHERE User_roles.role_id = 1")
+    students = cursor.fetchall()
+    cursor.execute("SELECT class_id, class_name FROM Classes")
+    classes = cursor.fetchall()
+    conn.close()
+    return render_template('add_group.html', classes=classes, students=students)
 
 @app.route('/logout')
 def logout():
