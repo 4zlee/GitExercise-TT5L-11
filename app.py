@@ -12,8 +12,6 @@ app.secret_key = 'your_secret_key'
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 465
 app.config['MAIL_USE_SSL'] = True
-app.config['MAIL_USERNAME'] = 'alexxaviera081@gmail.com'  # Lecturer's email address
-app.config['MAIL_PASSWORD'] = 'yttmlbbokdiqrnby'     # App password for lecturer's email
 
 def get_lecturer_email(lecturer_id):
     conn = sqlite3.connect(DATABASE)
@@ -22,6 +20,15 @@ def get_lecturer_email(lecturer_id):
     lecturer_email = cursor.fetchone()[0]
     conn.close()
     return lecturer_email
+
+# This function can be used to fetch lecturer's app password from the database
+def get_lecturer_app_password(lecturer_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT app_password FROM lecturer_app_passwords WHERE lecturer_id = ?", (lecturer_id,))
+    app_password = cursor.fetchone()[0]
+    conn.close()
+    return app_password
 
 mail = Mail(app)
 
@@ -42,12 +49,25 @@ def send_email():
     if request.method == 'POST':
         lecturer_id = session.get('user_id')
         lecturer_email = get_lecturer_email(lecturer_id)
+        app_password = get_lecturer_app_password(lecturer_id)
+
+        # Configure Flask-Mail with the lecturer's email and app password
+        app.config['MAIL_USERNAME'] = lecturer_email
+        app.config['MAIL_PASSWORD'] = app_password
+
+        mail = Mail(app)  # Reinitialize mail with the new configuration
+
         student_email = request.form['student_email']
+        class_id = request.form['class_id']
+        group_id = request.form['group_id']
+
+        signup_url = url_for('signup_invited', class_id=class_id, group_id=group_id, _external=True)
+        email_body = f'Hi there! You have been invited to join a class and group. Click the link below to sign up:\n\n{signup_url}'
 
         # Send email to the student
         try:
-            msg = Message('Hello from Flask', sender=lecturer_email, recipients=[student_email])
-            msg.body = 'Hi there! This is a test email sent from Flask.'
+            msg = Message('Class Invitation', sender=lecturer_email, recipients=[student_email])
+            msg.body = email_body
             mail.send(msg)
             flash('Email sent successfully!', 'success')
         except Exception as e:
@@ -125,6 +145,10 @@ def get_user_name(user_id):
     conn.close()
     return user_name
 
+@app.route('/signup_invited/<class_id>/<group_id>')#Faz
+def signup_invited(class_id, group_id):
+    return render_template('signup_invited.html', class_id=class_id, group_id=group_id)
+
 @app.route('/signup')
 def signup():
     return render_template('signup.html')
@@ -133,8 +157,11 @@ def signup():
 def signup_post():
     name = request.form['name']
     password = request.form['password']
+    app_password = request.form['app_password']
     email = request.form['email']
     role = request.form['role']
+    class_id = request.form.get('class_id')
+    group_id = request.form.get('group_id')
 
     if not name or not password:
         flash('All fields are required', 'error')
@@ -162,6 +189,14 @@ def signup_post():
     role_id = cursor.fetchone()['role_id']
     cursor.execute("INSERT INTO User_roles (user_id, role_id) VALUES (?, ?)", (new_user_id, role_id))
     conn.commit()
+
+    cursor.execute("INSERT INTO lecturer_app_passwords (lecturer_id, app_password) VALUES (?, ?)", (new_user_id, app_password))
+    conn.commit()
+
+    if class_id and group_id:
+        cursor.execute("INSERT INTO Class_students (class_id, student_id) VALUES (?, ?)", (class_id, new_user_id))
+        cursor.execute("INSERT INTO group_members (group_id, user_id) VALUES (?, ?)", (group_id, new_user_id))
+        conn.commit()
 
     conn.close()
 

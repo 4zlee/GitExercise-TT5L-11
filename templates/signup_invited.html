@@ -2,29 +2,20 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name ="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign up</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up</title>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style_SignUpPage.css') }}">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel='stylesheet' href='https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css'>
-    <div class="MMU-logo">
-        <img src="/static/MMUlogo.png" alt="MMU Logo" style="width:50%;height:auto;">
-    </div>
 </head>
 <body>
     <div class="container">
         <div class="form_box">
-            <h1>Sign up</h1>
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ category }}" role="alert">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-            <form action="/signup" method="post">
+            <h1>Sign Up</h1>
+            <form action="{{ url_for('signup_post') }}" method="post">
+                <input type="hidden" name="class_id" value="{{ request.args.get('class_id') }}">
+                <input type="hidden" name="group_id" value="{{ request.args.get('group_id') }}">
+
                 <div class="input_field">
                     <input type="text" name="name" placeholder="Name" required>
                 </div>
@@ -37,16 +28,13 @@
                 <div class="input_field" id="app_password_field" style="display: none;">
                     <input type="password" name="app_password" placeholder="App Password">
                 </div>
-                <label for="role">Choose a role</label>
-                <select name="role" id="role" class="selection_box" onchange="toggleAppPasswordField()">
-                    <option value="student">Student</option>
-                    <option value="lecturer">Lecturer</option>
-                </select>
-                <div class="btn_field">
-                    <button type="submit">Sign Up</button>
+                <div class="input_field">
+                    <select name="role" id="role" class="selection_box" onchange="toggleAppPasswordField()">
+                        <option value="student">Student</option>
+                    </select>
                 </div>
-                <div class="login_link">
-                    <p>Already have an account? <a href="{{ url_for('login') }}">Login</a></p>
+                <div class="btn_field">
+                    <button type="submit" class="btn btn-primary">Sign Up</button>
                 </div>
             </form>
         </div>
@@ -61,7 +49,6 @@
                 appPasswordField.style.display = 'none';
             }
         }
-        // Initialize the app password field state on page load
         window.onload = toggleAppPasswordField;
     </script>
 </body>
