@@ -113,3 +113,11 @@ input{
 .login_link p a:hover {
     text-decoration: underline;
 }
+
+#app_password_field {
+    display: none;
+}
+
+#app_password_field.show {
+    display: flex;
+}

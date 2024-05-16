@@ -10,8 +10,24 @@
     <p>Enter the email address of the student you want to send a message to:</p>
     <form method="post" action="{{ url_for('send_email') }}">
         <input type="hidden" name="lecturer_id" value="{{ session.user_id }}">
+        
         <label for="student_email">Student Email:</label>
         <input type="email" id="student_email" name="student_email" required><br>
+        
+        <label for="class_id">Select Class:</label>
+        <select id="class_id" name="class_id" required>
+            {% for class in classes %}
+                <option value="{{ class.class_id }}">{{ class.class_name }}</option>
+            {% endfor %}
+        </select><br>
+
+        <label for="group_id">Select Group:</label>
+        <select id="group_id" name="group_id" required>
+            {% for group in groups %}
+                <option value="{{ group.group_id }}">{{ group.group_name }}</option>
+            {% endfor %}
+        </select><br>
+
         <button type="submit" class="btn btn-primary">Send Email</button>
     </form>
 </div>
