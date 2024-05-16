@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, session, redirect, url_for, flash
+from flask import Flask, render_template, request, session, jsonify, redirect, url_for, flash
 import sqlite3
 import hashlib
 import re
@@ -61,13 +61,40 @@ def send_email():
         class_id = request.form['class_id']
         group_id = request.form['group_id']
 
-        signup_url = url_for('signup_invited', class_id=class_id, group_id=group_id, _external=True)
-        email_body = f'Hi there! You have been invited to join a class and group. Click the link below to sign up:\n\n{signup_url}'
+        # Check if the student exists
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT user_id FROM Users WHERE email = ?", (student_email,))
+        student = cursor.fetchone()
 
-        # Send email to the student
+        if student:
+            student_id = student['user_id']
+
+        else:
+            student_id = cursor.lastrowid
+
+            # Assign the student role
+            cursor.execute("SELECT role_id FROM Roles WHERE role_name = 'student'")
+            role_id = cursor.fetchone()['role_id']
+            cursor.execute("INSERT INTO User_roles (user_id, role_id) VALUES (?, ?)", (student_id, role_id))
+            conn.commit()
+
+        # Check if the student is already in the group
+        cursor.execute("SELECT * FROM group_members WHERE user_id = ? AND group_id = ?", (student_id, group_id))
+        group_member = cursor.fetchone()
+
+        if not group_member:
+            cursor.execute("INSERT INTO group_members (user_id, group_id, class_id) VALUES (?, ?, ?)",
+                           (student_id, group_id, class_id))
+            conn.commit()
+
+        conn.close()
+
+        # Send email to the student with a link to the signup page
+        signup_url = url_for('signup', _external=True) + f'?class_id={class_id}&group_id={group_id}'
+        msg = Message('Invitation to Join Class and Group', sender=lecturer_email, recipients=[student_email])
+        msg.body = f'You have been invited to join the class. Please sign up using the following link: {signup_url}'
         try:
-            msg = Message('Class Invitation', sender=lecturer_email, recipients=[student_email])
-            msg.body = email_body
             mail.send(msg)
             flash('Email sent successfully!', 'success')
         except Exception as e:
@@ -194,8 +221,7 @@ def signup_post():
     conn.commit()
 
     if class_id and group_id:
-        cursor.execute("INSERT INTO Class_students (class_id, student_id) VALUES (?, ?)", (class_id, new_user_id))
-        cursor.execute("INSERT INTO group_members (group_id, user_id) VALUES (?, ?)", (group_id, new_user_id))
+        cursor.execute("INSERT INTO group_members (group_id, class_id, user_id) VALUES (?, ?, ?)", (group_id, class_id, new_user_id))
         conn.commit()
 
     conn.close()
@@ -303,6 +329,118 @@ def delete_class(class_id):
         conn.close()
     return redirect(url_for('class_list'))
 
+@app.route('/students_list')
+def students_list():
+    lecturer_id = session.get('user_id')
+    
+    if lecturer_id:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT Users.user_id, Users.name, Classes.class_name, Groups.group_name 
+            FROM Users
+            LEFT JOIN group_members ON Users.user_id = group_members.user_id
+            LEFT JOIN Classes ON group_members.class_id = Classes.class_id
+            LEFT JOIN Groups ON group_members.group_id = Groups.group_id
+            WHERE Users.user_id IN (
+                SELECT user_id FROM User_roles WHERE role_id = (
+                    SELECT role_id FROM Roles WHERE role_name = 'student'
+                )
+            )
+        """)
+        students = cursor.fetchall()
+        conn.close()
+        
+        # Debugging: Print fetched data
+        print("Fetched students data:", students)
+        
+        return render_template('students_list.html', students=students)
+    else:
+        return "No user logged in"
+
+@app.route('/edit_students', methods=['POST', 'GET'])
+def edit_students():
+    if request.method == 'POST':
+        user_id = request.form.get('user_id')
+
+        if user_id:
+            name = request.form['name']
+            class_id = request.form['class_id']
+            group_id = request.form['group_id']
+
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            
+            try:
+                # Update student's name in Users table
+                cursor.execute("UPDATE Users SET name = ? WHERE user_id = ?", (name, user_id))
+                
+                # Update class and group association in group_members table
+                cursor.execute("UPDATE group_members SET class_id = ?, group_id = ? WHERE user_id = ?", (class_id, group_id, user_id))
+                
+                conn.commit()
+                flash('Student details updated successfully', 'success')
+            except Exception as e:
+                conn.rollback()
+                flash(f'Error updating student details: {str(e)}', 'danger')
+            finally:
+                conn.close()
+
+            return redirect(url_for('students_list'))
+        else:
+            flash('User ID not provided', 'danger')
+            return redirect(url_for('students_list'))
+    else:
+        user_id = request.args.get('user_id')
+
+        if user_id:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            try:
+                cursor.execute("""
+                    SELECT Users.name, Classes.class_id, Groups.group_id, Classes.class_name, Groups.group_name
+                    FROM Users
+                    LEFT JOIN group_members ON Users.user_id = group_members.user_id
+                    LEFT JOIN Classes ON group_members.class_id = Classes.class_id
+                    LEFT JOIN Groups ON group_members.group_id = Groups.group_id
+                    WHERE Users.user_id = ?
+                """, (user_id,))
+                student = cursor.fetchone()
+
+                cursor.execute("SELECT class_id, class_name FROM Classes")
+                classes = cursor.fetchall()
+
+                cursor.execute("SELECT group_id, group_name FROM Groups")
+                groups = cursor.fetchall()
+            except Exception as e:
+                flash(f'Error retrieving student details: {str(e)}', 'danger')
+                student = None
+            finally:
+                conn.close()
+
+            return render_template('edit_students.html', student=student, classes=classes, groups=groups, user_id=user_id)
+        else:
+            flash('User ID not provided', 'danger')
+            return redirect(url_for('students_list'))
+        
+@app.route('/delete_student/<int:user_id>')
+def delete_student(user_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        # Delete student from the database
+        cursor.execute("DELETE FROM Users WHERE user_id = ?", (user_id,))
+        cursor.execute("DELETE FROM group_members WHERE user_id = ?", (user_id,))
+        conn.commit()
+        flash('Student successfully deleted', 'success')
+    except Exception as e:
+        conn.rollback()
+        flash(f'Error deleting student: {str(e)}', 'danger')
+    finally:
+        conn.close()
+    return redirect(url_for('students_list'))
+
 @app.route('/add_students')
 def add_students():
     if "user_id" in session:
@@ -324,10 +462,15 @@ def add_students():
         return render_template('add_students.html', lecturer_email= lecturer_email , classes=classes, groups=groups)
     else:
         return redirect(url_for('login'))
-
-@app.route('/students_list')
-def students_list():
-   pass
+    
+@app.route('/get_groups/<class_id>')
+def get_groups(class_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT group_id, group_name FROM Groups WHERE class_id = ?", (class_id,))
+    groups = cursor.fetchall()
+    conn.close()
+    return jsonify({'groups': [{'group_id': group['group_id'], 'group_name': group['group_name']} for group in groups]})
 
 @app.route('/join_class/<class_id>')
 def join_class(class_id):
@@ -352,13 +495,11 @@ def add_group():
         conn = get_db_connection()
         cursor = conn.cursor()
         try:
-            # Insert new group into the database
             cursor.execute("INSERT INTO Groups (class_id, group_name) VALUES (?, ?)", (class_id, group_name))
             group_id = cursor.lastrowid
 
-            # Insert group members into the database
             for student_id in students:
-                cursor.execute("INSERT INTO group_members (user_id, group_id) VALUES (?, ?)", (student_id, group_id))
+                cursor.execute("INSERT INTO group_members (user_id, class_id, group_id) VALUES (?,?, ?)", (student_id, class_id, group_id))
 
             conn.commit()
             flash('Group added successfully', 'success')
@@ -370,7 +511,6 @@ def add_group():
 
         return redirect(url_for('add_group'))
 
-    # If GET request, render the add group form
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT Users.user_id, Users.name FROM Users INNER JOIN User_roles ON Users.user_id = User_roles.user_id WHERE User_roles.role_id = 1")
