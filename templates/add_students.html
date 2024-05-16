@@ -16,6 +16,7 @@
         
         <label for="class_id">Select Class:</label>
         <select id="class_id" name="class_id" required>
+            <option value="">Select a class</option>
             {% for class in classes %}
                 <option value="{{ class.class_id }}">{{ class.class_name }}</option>
             {% endfor %}
@@ -23,6 +24,7 @@
 
         <label for="group_id">Select Group:</label>
         <select id="group_id" name="group_id" required>
+            <option value="">Select a group</option>
             {% for group in groups %}
                 <option value="{{ group.group_id }}">{{ group.group_name }}</option>
             {% endfor %}
@@ -31,4 +33,28 @@
         <button type="submit" class="btn btn-primary">Send Email</button>
     </form>
 </div>
-{% endblock %}
+<script>
+    document.getElementById('class_id').addEventListener('change', function() {
+        var classId = this.value;
+        var groupSelect = document.getElementById('group_id');
+        
+        // Clear the current group options
+        groupSelect.innerHTML = '<option value="">Select a group</option>';
+    
+        if (classId) {
+            // Fetch the groups for the selected class
+            fetch('/get_groups/' + classId)
+                .then(response => response.json())
+                .then(data => {
+                    data.groups.forEach(function(group) {
+                        var option = document.createElement('option');
+                        option.value = group.group_id;
+                        option.textContent = group.group_name;
+                        groupSelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error fetching groups:', error));
+        }
+    });
+    </script>
+    {% endblock %}
