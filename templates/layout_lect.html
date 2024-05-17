@@ -5,6 +5,7 @@
         <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style_LecturerMenu.css') }}">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
         
+
         <title>{%block title%}{%endblock%}</title>
         
         <nav class="navbar">
@@ -25,7 +26,7 @@
                     <a href="#">Groups <i class="fas fa-caret-down"></i></a>
 
                     <ul class="dropdown_groups">
-                        <li><a href="{{ url_for('add_group') }}">Add</a></li>
+                        <li><a href="#">Add</a></li>
                         <li><a href="#">List</a></li>
                         <li><a href="#">Import</a></li>
                     </ul>
@@ -50,9 +51,7 @@
         </nav>
     </header>
     <body>
-
         {%block content%}
         {%endblock%}
-
     </body>
 </html>

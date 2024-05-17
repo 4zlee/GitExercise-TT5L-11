@@ -2,19 +2,17 @@
 <html lang="en">
 
 <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-witdth, intial-scale=1.0">
-        <title>Login Page</title> 
-        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style_LoginPage.css') }}">
-        <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-witdth, intial-scale=1.0">
+    <title>Login Page</title> 
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style_LoginPage.css') }}">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel='stylesheet' href='https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css'>
 
-        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-
-         <div class= "MMU-logo">
-             <img src="/static/MMUlogo.png" alt="MMU Logo" style="width:50%;height:auto;">
-         </div>
-
-    </head>
+    <div class= "MMU-logo">
+        <img src="/static/MMUlogo.png" alt="MMU Logo" style="width:50%;height:auto;">
+    </div>
+</head>
     <body>
             <div class= "wrapper">
                 <h1>Log In</h1>
@@ -22,7 +20,7 @@
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
                         {% for category, message in messages %}
-                            <div class="alert alert -{{ category }}" role="alert">
+                            <div class="alert alert-{{ category }}" role="alert">
                                 {{ message }}
                             </div>
                         {% endfor %}

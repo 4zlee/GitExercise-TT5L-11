@@ -12,6 +12,17 @@
 {% block content %}
     <div class="edit_class">
         <h1>Edit Course</h1>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="message">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
         <form method="POST" class="edit_class_form">
             <label class="class_name" for="class_name">Course Name:</label>
             <div class="input">
