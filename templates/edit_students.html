@@ -17,7 +17,7 @@
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">
+                    <div class="alert alert-{{ category }}" role="alert">
                         {{ message }}
                     </div>
                 {% endfor %}
@@ -32,7 +32,7 @@
             </div>
             <div class="form-group">
                 <label for="class_id">Class</label>
-                <select name="class_id" class="form-control">
+                <select id="class_id" name="class_id" class="form-control">
                     {% for class in classes %}
                         <option value="{{ class['class_id'] }}" {% if class['class_id'] == student['class_id'] %}selected{% endif %}>{{ class['class_name'] }}</option>
                     {% endfor %}
@@ -40,7 +40,7 @@
             </div>
             <div class="form-group">
                 <label for="group_id">Group</label>
-                <select name="group_id" class="form-control">
+                <select id="group_id" name="group_id" class="form-control">
                     {% for group in groups %}
                         <option value="{{ group['group_id'] }}" {% if group['group_id'] == student['group_id'] %}selected{% endif %}>{{ group['group_name'] }}</option>
                     {% endfor %}

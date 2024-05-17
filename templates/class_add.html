@@ -4,22 +4,22 @@
 <meta charset="UTF-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+<link rel='stylesheet' href='https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css'>
 
-<title>Add class</title>    
+<title>Add Course</title>    
 
 {%block title%}
-Add class
+Add course
 {%endblock%}
 {%block content%}
 <div class="add_class">
-    <h1>Add Class</h1>
+    <h1>Add Course</h1>
 
     <!-- Flash messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
-                <div class="alert alert-{{ category }}" role="alert">
+                <div class="messages">
                     {{ message }}
                 </div>
             {% endfor %}

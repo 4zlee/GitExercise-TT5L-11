@@ -81,17 +81,21 @@ def send_email():
 
         # Check if the student is already in the group
         cursor.execute("SELECT * FROM group_members WHERE user_id = ? AND group_id = ?", (student_id, group_id))
-        group_member = cursor.fetchone()
+        existing_membership = cursor.fetchone()
 
-        if not group_member:
+        if existing_membership is None:
+            # If the student is not already in the group, insert the new membership
             cursor.execute("INSERT INTO group_members (user_id, group_id, class_id) VALUES (?, ?, ?)",
-                           (student_id, group_id, class_id))
+                        (student_id, group_id, class_id))
             conn.commit()
+        else:
+            # If the student is already in the group, you may choose to log this or handle it differently
+            print("Student is already a member of the group")
 
-        conn.close()
+        # Generate the URL for the signup_invited route with class_id and group_id parameters
+        signup_url = url_for('signup_invited', class_id=class_id, group_id=group_id, _external=True)
 
         # Send email to the student with a link to the signup page
-        signup_url = url_for('signup', _external=True) + f'?class_id={class_id}&group_id={group_id}'
         msg = Message('Invitation to Join Class and Group', sender=lecturer_email, recipients=[student_email])
         msg.body = f'You have been invited to join the class. Please sign up using the following link: {signup_url}'
         try:
@@ -100,6 +104,7 @@ def send_email():
         except Exception as e:
             flash(f'Error sending email: {str(e)}', 'error')
 
+        # Redirect back to the add_students page
         return redirect(url_for('add_students'))
 
 @app.route('/')
@@ -172,9 +177,71 @@ def get_user_name(user_id):
     conn.close()
     return user_name
 
-@app.route('/signup_invited/<class_id>/<group_id>')#Faz
-def signup_invited(class_id, group_id):
-    return render_template('signup_invited.html', class_id=class_id, group_id=group_id)
+@app.route('/signup_invited', methods=['GET', 'POST'])
+def signup_invited():
+    if request.method == 'POST':
+        name = request.form['name']
+        email = request.form['email']
+        password = request.form['password']
+        class_id = request.form['class_id']
+        group_id = request.form['group_id']
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Check if the email is already in use
+        cursor.execute("SELECT * FROM Users WHERE email = ?", (email,))
+        existing_user = cursor.fetchone()
+
+        if existing_user:
+            existing_user_id = existing_user['user_id']
+            cursor.execute("SELECT group_id FROM group_members WHERE user_id = ? AND class_id = ?", (existing_user_id, class_id))
+            existing_group = cursor.fetchone()
+
+            if existing_group:
+                flash('User is already a member of a group in the provided class', 'warning')
+                conn.close()
+                return redirect(url_for('login'))
+
+            else:
+                cursor.execute("INSERT INTO group_members (user_id, group_id, class_id) VALUES (?, ?, ?)",
+                            (existing_user_id, group_id, class_id))
+                flash('Welcome back! Added to the group successfully', 'success')
+
+            conn.commit()
+            conn.close()
+
+            return redirect(url_for('login'))
+        else:
+            try:
+                # If the user is not existing, create a new user record
+                hashed_password = hash_password(password)
+                cursor.execute("INSERT INTO Users (name, email, password) VALUES (?, ?, ?)",
+                               (name, email, hashed_password))
+                user_id = cursor.lastrowid
+
+                # Assign the student role to the new user
+                cursor.execute("SELECT role_id FROM Roles WHERE role_name = 'student'")
+                role_id = cursor.fetchone()['role_id']
+                cursor.execute("INSERT INTO User_roles (user_id, role_id) VALUES (?, ?)", (user_id, role_id))
+
+                # Add the new user to the specified group
+                cursor.execute("INSERT INTO group_members (user_id, group_id, class_id) VALUES (?, ?, ?)",
+                               (user_id, group_id, class_id))
+
+                conn.commit()
+                flash('Signup successful!', 'success')
+            except Exception as e:
+                conn.rollback()
+                flash(f'Error signing up: {str(e)}', 'danger')
+            finally:
+                conn.close()
+
+            return redirect(url_for('login'))
+    else:
+        class_id = request.args.get('class_id')
+        group_id = request.args.get('group_id')
+        return render_template('signup_invited.html', class_id=class_id, group_id=group_id)
 
 @app.route('/signup')
 def signup():
@@ -352,7 +419,7 @@ def students_list():
         students = cursor.fetchall()
         conn.close()
         
-        # Debugging: Print fetched data
+        # Debugging
         print("Fetched students data:", students)
         
         return render_template('students_list.html', students=students)
@@ -373,10 +440,8 @@ def edit_students():
             cursor = conn.cursor()
             
             try:
-                # Update student's name in Users table
                 cursor.execute("UPDATE Users SET name = ? WHERE user_id = ?", (name, user_id))
                 
-                # Update class and group association in group_members table
                 cursor.execute("UPDATE group_members SET class_id = ?, group_id = ? WHERE user_id = ?", (class_id, group_id, user_id))
                 
                 conn.commit()
@@ -484,41 +549,6 @@ def join_group(group_id):
     # Logic to join the group...
     flash(f'Joined group with ID: {group_id}', 'success')
     return redirect(url_for('home_stu'))
-
-@app.route('/add_group', methods=['GET', 'POST'])
-def add_group():
-    if request.method == 'POST':
-        class_id = request.form['class_id']
-        group_name = request.form['group_name']
-        students = request.form.getlist('students[]')
-
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        try:
-            cursor.execute("INSERT INTO Groups (class_id, group_name) VALUES (?, ?)", (class_id, group_name))
-            group_id = cursor.lastrowid
-
-            for student_id in students:
-                cursor.execute("INSERT INTO group_members (user_id, class_id, group_id) VALUES (?,?, ?)", (student_id, class_id, group_id))
-
-            conn.commit()
-            flash('Group added successfully', 'success')
-        except Exception as e:
-            conn.rollback()
-            flash(f'Error adding group: {str(e)}', 'danger')
-        finally:
-            conn.close()
-
-        return redirect(url_for('add_group'))
-
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT Users.user_id, Users.name FROM Users INNER JOIN User_roles ON Users.user_id = User_roles.user_id WHERE User_roles.role_id = 1")
-    students = cursor.fetchall()
-    cursor.execute("SELECT class_id, class_name FROM Classes")
-    classes = cursor.fetchall()
-    conn.close()
-    return render_template('add_group.html', classes=classes, students=students)
 
 @app.route('/logout')
 def logout():

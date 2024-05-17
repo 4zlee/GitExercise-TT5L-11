@@ -1,35 +1,49 @@
-{% extends "layout_lect.html" %}
+{%extends "layout_lect.html"%}
 
-{% block title %}
-    Send Hi Email
-{% endblock %}
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+{%block title%}
+Invite Student
+{%endblock%}
 
 {% block content %}
-<div class="home">
-    <h2>Add Student Email</h2>
-    <p>Enter the email address of the student you want to send a message to:</p>
+<div class="add_class">
+    <h1>Add Student Email</h2>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}" role="alert">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <p>Enter the email address of the student you want to send a message to.</p>
     <form method="post" action="{{ url_for('send_email') }}">
         <input type="hidden" name="lecturer_id" value="{{ session.user_id }}">
-        
-        <label for="student_email">Student Email:</label>
-        <input type="email" id="student_email" name="student_email" required><br>
-        
-        <label for="class_id">Select Class:</label>
-        <select id="class_id" name="class_id" required>
-            <option value="">Select a class</option>
-            {% for class in classes %}
-                <option value="{{ class.class_id }}">{{ class.class_name }}</option>
-            {% endfor %}
-        </select><br>
+        <div class="input">
+            <input type="email" class="input_field" id="student_email" name="student_email" required placeholder="Student Email"><br>
+            <label for="class_id">Select Class:</label>
+            <select id="class_id" name="class_id" required>
+                <option value="">Select a class</option>
+                {% for class in classes %}
+                    <option value="{{ class.class_id }}">{{ class.class_name }}</option>
+                {% endfor %}
+            </select><br>
 
-        <label for="group_id">Select Group:</label>
-        <select id="group_id" name="group_id" required>
-            <option value="">Select a group</option>
-            {% for group in groups %}
-                <option value="{{ group.group_id }}">{{ group.group_name }}</option>
-            {% endfor %}
-        </select><br>
-
+            <label for="group_id">Select Group:</label>
+            <select id="group_id" name="group_id" class="selection_box" required>
+                <option value="">Select a group</option>
+                {% for group in groups %}
+                    <option value="{{ group.group_id }}">{{ group.group_name }}</option>
+                {% endfor %}
+            </select><br>
+        </div>
         <button type="submit" class="btn btn-primary">Send Email</button>
     </form>
 </div>
