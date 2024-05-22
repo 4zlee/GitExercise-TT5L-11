@@ -1,47 +1,68 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta name ="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Sign up</title>
-        <link rel="stylesheet" href="../Css/style_SignUpPage.css">
-
-        <div class= "MMU-logo">
-            <img src="../Img/MMUlogo.png" alt="MMU Logo" style="width:50%;height:auto;">
-        </div>
-        
-    </head>
-    <body>
+<head>
+    <meta charset="UTF-8">
+    <meta name ="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign up</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style_SignUpPage.css') }}">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel='stylesheet' href='https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css'>
+    <div class="MMU-logo">
+        <img src="/static/MMUlogo.png" alt="MMU Logo" style="width:50%;height:auto;">
+    </div>
+</head>
+<body>
     <div class="container">
         <div class="form_box">
             <h1>Sign up</h1>
-            <form>
-                <div class="input-group">
-                    <div class="input_field">
-                        <input type="text" placeholder="ID" required>
-                    </div> 
-
-                    <div class="input_field">
-                        <input type="email" placeholder="Email" required>
-                    </div>
-                
-                    <div class="input_field">
-                        <input type="Phone number" placeholder="Phone" required>
-                    </div>
-                    
-                    <div class="input_field">
-                        <input type="password" placeholder="Create Password" required>
-                    </div>
-
-                    <div class="input_field">
-                        <input type="password" placeholder="Confirm Password"required>
-                    </div>
-                    <p>Student Log In <a href="login.html">Click Here</a></p>
-                    <div class="btn_field">
-                    <button type="submit">Sign up</button>
-                    </div>
-
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}" role="alert">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            <form action="/signup" method="post">
+                <div class="input_field">
+                    <input type="text" name="name" placeholder="Name" required>
+                </div>
+                <div class="input_field">
+                    <input type="text" name="email" placeholder="Email" required>
+                </div>
+                <div class="input_field">
+                    <input type="password" name="password" placeholder="Password" required>
+                </div>
+                <div class="input_field" id="app_password_field" style="display: none;">
+                    <input type="password" name="app_password" placeholder="App Password">
+                </div>
+                <label for="role">Choose a role</label>
+                <select name="role" id="role" class="selection_box" onchange="toggleAppPasswordField()">
+                    <option value="student">Student</option>
+                    <option value="lecturer">Lecturer</option>
+                </select>
+                <div class="btn_field">
+                    <button type="submit">Sign Up</button>
+                </div>
+                <div class="login_link">
+                    <p>Already have an account? <a href="{{ url_for('login') }}">Login</a></p>
                 </div>
             </form>
-        </div>   
+        </div>
     </div>
+    <script>
+        function toggleAppPasswordField() {
+            const roleSelect = document.getElementById('role');
+            const appPasswordField = document.getElementById('app_password_field');
+            if (roleSelect.value === 'lecturer') {
+                appPasswordField.style.display = 'block';
+            } else {
+                appPasswordField.style.display = 'none';
+            }
+        }
+        // Initialize the app password field state on page load
+        window.onload = toggleAppPasswordField;
+    </script>
+</body>
 </html>

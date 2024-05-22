@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign up</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style_SignUpPage.css') }}">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel='stylesheet' href='https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css'>
+</head>
+<body>
+    <div class="container">
+        <div class="form_box">
+            <h1>Signup</h1>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}" role="alert">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form action="{{ url_for('signup_invited') }}" method="POST">
+                <div class="input_field">
+                    <input type="text" name="name" id="name" placeholder="Name" required>
+                </div>
+                <div class="input_field">
+                    <input type="text" name="email" id="email" placeholder="Email" required>
+                </div>
+                <div class="input_field">
+                    <input type="password" name="password" id="password" placeholder="Password" required>
+                </div>
+                <input type="hidden" name="class_id" value="{{ class_id }}">
+                <input type="hidden" name="group_id" value="{{ group_id }}">
+                <div class="btn_field">
+                    <button type="submit">Sign Up</button>
+                </div>
+            </form>
+        </div>
+</div>
+</body>
+</html>

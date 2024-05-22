@@ -30,10 +30,55 @@ body {
     z-index: 90;
 }
 
+.intro-text {
+    width: 420px;
+    position: relative;
+    background: white;
+    color: black;
+    border: 2px solid rgba(255, 255, 255, .2);
+    backdrop-filter: contrast(50%);
+    box-shadow: 0 0 10px rgba(0, 0, 0, .1);
+    border-radius: 10px;
+    padding: 30px 40px;
+    align-content: center;
+    margin-top: 250px;
+}
+
+.Welcome {
+    line-height: 2;
+    text-decoration: underline;
+}
+
+.Info {
+    line-height: 1.5;
+}
+
+.Note {
+    line-height: 1.5;
+}
+
+.message {
+    font-size: 30px;
+    text-align: center;
+    text-indent: 130px;
+    margin-top: 130px;
+    margin-left: 10px;
+    position: relative;
+    justify-content: center;
+}
+  
+.MMU-logo {
+      padding-top: 1%;
+      padding-left: 1%;
+      position: fixed;
+      top: 0;
+      left: 0;
+}
+
 .navbar a {
     position: relative;
     font-size: 18px;
-    color: white;
+    color: black;
     font-weight: 500;
     text-decoration: none;
     margin-left: 40px;
@@ -46,21 +91,10 @@ body {
   left: 0;
   width: 0;
   height: 2px;
-  background: white;
+  background: black;
   transition: .3s;
 }
 
 .navbar a:hover::before {
     width: 100%;
-}
-
-.MMU-logo {
-    padding-top: 1%;
-    padding-left: 1%;
-    top: 0;
-    left: 0;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    padding: 5px;
-    width: 150px;
 }

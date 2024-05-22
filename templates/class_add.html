@@ -1,0 +1,39 @@
+
+{%extends "layout_lect.html"%}
+
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel='stylesheet' href='https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css'>
+
+<title>Add Course</title>    
+
+{%block title%}
+Add course
+{%endblock%}
+{%block content%}
+<div class="add_class">
+    <h1>Add Course</h1>
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="messages">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form action="/class_add" method="post">
+        <div class="input">
+            <input class="input_field" type="text" name="class_id" placeholder="Class ID" required maxlength="10" minlength="10">
+            <input class="input_field" type="text" name="class_name" placeholder="Class Name" required>
+        </div>
+        <div>
+            <button type="submit" class="btn">Submit</button>
+        </div>
+    </form>
+</div>
+{%endblock%}

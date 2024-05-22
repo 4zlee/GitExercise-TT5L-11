@@ -1,0 +1,265 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap');
+
+*
+{
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+    font-family: "Roboto", sans-serif;
+}
+
+.logo{
+    padding-top: 1%;
+    padding-left: 1%;
+    position: fixed;
+    top: 0;
+    left: 0;
+}
+
+.header{
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 10px 30px;
+    background: transparent;
+    display: flex;
+    justify-content: space-evenly;
+    z-index: 90;
+}
+
+.navbar{
+    padding-top: 1%;
+    padding-left: 1%;
+    position: fixed;
+    top: 0;
+    right: 0;
+}
+
+.message {
+    font-size: 36px;
+    text-align: center;
+}
+
+body {
+    display: flex; 
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: url(PageBg.jpg) no-repeat;
+    background-size: cover;
+    background-position: center;
+    image-resolution: 1080;
+}
+
+ul {
+    list-style: none;
+    background-color: transparent;
+}
+
+ul li {
+    display: inline-block;
+    position: relative;
+}
+
+ul li a {
+    display: block;
+    padding: 20px 25px;
+    color: black;
+    text-decoration: none;
+    text-align: center;
+    font-size: 15px;
+}
+
+ul li a:hover {
+    background-color: lightgrey;
+}
+
+ul li ul.dropdown_classes li {
+    display: block;
+}
+
+ul li ul.dropdown_classes{
+    width: 100%;
+    background: whitesmoke;
+    position: absolute;
+    z-index: 999;
+    display: none;
+}
+
+ul li:hover ul.dropdown_classes {
+   display: block;
+}
+
+ul li ul.dropdown_groups li {
+    display: block;
+}
+
+ul li ul.dropdown_groups{
+    width: 100%;
+    background: whitesmoke;
+    position: absolute;
+    z-index: 999;
+    display: none;
+}
+
+ul li:hover ul.dropdown_groups {
+   display: block;
+}
+
+ul li ul.dropdown_students li {
+    display: block;
+}
+
+ul li ul.dropdown_students{
+    width: 100%;
+    background: whitesmoke;
+    position: absolute;
+    z-index: 999;
+    display: none;
+}
+
+ul li:hover ul.dropdown_students {
+   display: block;
+}
+
+/* ADD CLASS HTML */
+
+.add_class{
+    min-width:420px;
+    width: auto;
+    background: rgb(255, 255, 255);
+    color: black;
+    border: 2px solid rgba(255, 255, 255, .2);
+    backdrop-filter: contrast(50%);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.329);
+    border-radius: 40px;
+    margin: 0px;
+    padding: 30px 40px;
+    /*border: 5px double rgb(37, 106, 255);*/
+}
+
+.add_class h1 {
+    font-size: 30px;
+    text-align: center;
+    /*text-decoration: underline;*/
+}
+
+input{
+    width: 80%;
+    background: transparent;
+    border: 0;
+    outline: 0;
+    padding: 15px 3px;
+}
+
+.input_field{
+    background-color: rgba(245, 245, 245, 0.993);
+    margin:  15px 0;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    /*border: 3px inset;*/
+}
+
+.input input::placeholder {
+    color: rgba(0, 0, 0, 0.56);
+}
+
+.add_class .btn {
+    width: 100%;
+    height: 45px;
+    background: transparent;
+    background-color: rgb(255, 255, 255);
+    border: none;
+    outline: none;
+    border-radius: 40px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, .1);
+    cursor: pointer;
+    font-size: 16px;
+    color: #333;
+    font-weight: 600;
+}
+
+/*.form_box .btn:hover{
+    color: crimson;
+}*/
+
+/* CLASS LIST */
+
+.class_list{
+    font-size: 12px;
+    font-weight: normal;
+    text-align: center;
+
+    width: 650px;
+    margin: 0px auto;
+    border-collapse: collapse;
+    box-shadow: 0 0 10px rgba(0, 0, 0, .1);
+}
+
+td, th{
+    padding: 8px;
+    border: 2px solid rgb(87, 104, 111);
+}
+
+td.name{
+    width: 150px;
+    text-align: left;
+}
+
+th{
+    font-weight: bold;
+    color: black;
+    background-color: rgb(251, 213, 192);
+}
+
+tr:nth-child(odd){
+    background-color: rgb(245, 229, 221);
+}
+
+tr:nth-child(even){
+    background-color: whitesmoke;
+}
+
+/* EDIT CLASS PAGE */
+
+.edit_class{
+    min-width:420px;
+    width: auto;
+    background: rgb(255, 255, 255);
+    color: black;
+    border: 2px solid rgba(255, 255, 255, .2);
+    backdrop-filter: contrast(50%);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.329);
+    border-radius: 40px;
+    margin: 0px;
+    padding: 30px 40px;
+    /*border: 5px double rgb(37, 106, 255);*/
+}
+
+.edit_class_form{
+    padding-top: 14px;
+}
+
+.edit_class h1 {
+    font-size: 30px;
+    text-align: center;
+    /*text-decoration: underline;*/
+}
+
+.edit_class .btn {
+    width: 100%;
+    height: 45px;
+    background: transparent;
+    background-color: rgb(255, 255, 255);
+    border: none;
+    outline: none;
+    border-radius: 40px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, .1);
+    cursor: pointer;
+    font-size: 16px;
+    color: #333;
+    font-weight: 600;
+}
