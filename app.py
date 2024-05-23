@@ -183,8 +183,17 @@ def signup_invited():
         name = request.form['name']
         email = request.form['email']
         password = request.form['password']
+        confirm_password = request.form['confirm_password']
         class_id = request.form['class_id']
         group_id = request.form['group_id']
+
+        if not name or not password or not confirm_password:
+            flash('All fields are required', 'error')
+            return redirect(url_for('signup_invited'))
+    
+        if password != confirm_password:
+            flash('Passwords do not match', 'error')
+            return redirect(url_for('signup_invited'))
 
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -251,16 +260,21 @@ def signup():
 def signup_post():
     name = request.form['name']
     password = request.form['password']
+    confirm_password = request.form['confirm_password']
     app_password = request.form['app_password']
     email = request.form['email']
     role = request.form['role']
     class_id = request.form.get('class_id')
     group_id = request.form.get('group_id')
 
-    if not name or not password:
+    if not name or not password or not confirm_password:
         flash('All fields are required', 'error')
         return redirect(url_for('signup'))
-
+    
+    if password != confirm_password:
+        flash('Passwords do not match', 'error')
+        return redirect(url_for('signup'))
+        
     conn = get_db_connection()
     cursor = conn.cursor()
 
