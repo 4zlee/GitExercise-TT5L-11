@@ -10,7 +10,7 @@ Invite Student
 {%endblock%}
 
 {% block content %}
-<div class="add_class">
+<div class="add_student">
     <h1>Add Student Email</h2>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -23,12 +23,12 @@ Invite Student
         {% endif %}
     {% endwith %}
 
-    <p>Enter the email address of the student you want to send a message to.</p>
+    <p class="email_note">Enter the email address of the student you want to send a message to.</p>
     <form method="post" action="{{ url_for('send_email') }}">
         <input type="hidden" name="lecturer_id" value="{{ session.user_id }}">
         <div class="input">
             <input type="email" class="input_field" id="student_email" name="student_email" required placeholder="Student Email"><br>
-            <label for="class_id">Select Class:</label>
+            <label class="class_id">Select Class:</label>
             <select id="class_id" name="class_id" required>
                 <option value="">Select a class</option>
                 {% for class in classes %}
