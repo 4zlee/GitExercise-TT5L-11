@@ -26,21 +26,20 @@
 
         <form method="POST" action="{{ url_for('edit_students') }}">
             <input type="hidden" name="user_id" value="{{ user_id }}">
-            <div class="form-group">
-                <label for="name">Name</label>
-                <input type="text" name="name" class="form-control" value="{{ student['name'] }}">
+            <div class="form-group-name">
+                <input type="text" name="name" class="input_field" value="{{ student['name'] }}" placeholder="Name">
             </div>
-            <div class="form-group">
+            <div class="form-group-class">
                 <label for="class_id">Class</label>
-                <select id="class_id" name="class_id" class="form-control">
+                <select id="class_id" name="class_id" class="selection_box">
                     {% for class in classes %}
                         <option value="{{ class['class_id'] }}" {% if class['class_id'] == student['class_id'] %}selected{% endif %}>{{ class['class_name'] }}</option>
                     {% endfor %}
                 </select>
             </div>
-            <div class="form-group">
+            <div class="form-group-group">
                 <label for="group_id">Group</label>
-                <select id="group_id" name="group_id" class="form-control">
+                <select id="group_id" name="group_id" class="selection_box">
                     {% for group in groups %}
                         <option value="{{ group['group_id'] }}" {% if group['group_id'] == student['group_id'] %}selected{% endif %}>{{ group['group_name'] }}</option>
                     {% endfor %}
