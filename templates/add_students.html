@@ -29,7 +29,7 @@ Invite Student
         <div class="input">
             <input type="email" class="input_field" id="student_email" name="student_email" required placeholder="Student Email"><br>
             <label class="class_id">Select Class:</label>
-            <select id="class_id" name="class_id" required>
+            <select id="class_id" name="class_id" class="selection_box" required>
                 <option value="">Select a class</option>
                 {% for class in classes %}
                     <option value="{{ class.class_id }}">{{ class.class_name }}</option>
