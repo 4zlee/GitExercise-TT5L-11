@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style_EvaluationStuPage.css') }}">
+    <title>Evaluation Page</title>
+
+<body>
+    <nav class="MMU-logo">
+        <a href='#' class="logo"><img src="/static/MMUlogo.png" alt="MMU Logo" style="width:50%;height:auto;"></a>
+    </nav>
+    
+    <table class="Titles">
+        <tr>
+            <th>Subject</th>
+            <th>Subject Group</th>        
+        </tr>
+    </table>
+
+    <div class="review-link">
+        <a href="{{ url_for('')}}">Review</a>
+    </div>
+
+    <nav class ="navbar">
+        <a href="{{ url_for('home_stu')}}">Home</a>
+        <a href="">Evaluation</a>
+        <a href="{{ url_for('login_post')}}">Logout</a>
+    </nav>
+
+</body>

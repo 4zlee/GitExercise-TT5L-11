@@ -3,6 +3,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style_EditClassesPage.css') }}">
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 
 {% block title %}
@@ -29,7 +30,7 @@
                 <input class="input_field" type="text" id="class_name" name="class_name" value="{{ class_name }}" required>
             </div>
             <div>
-                <button type="submit" class="btn">Submit</button>
+                <button type="submit-edit" class="btn">Submit</button>
             </div>
         </form>
     </div>
