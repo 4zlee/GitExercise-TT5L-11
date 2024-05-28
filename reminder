@@ -1,0 +1,11 @@
+Before adding and editing codes, please:
+git checkout main
+git pull
+dir (check whether you get the same folders and files from origin main)
+git checkout YourBranchName
+git merge main
+dir (check whether you get the same folders and files from origin main)
+If everything is fine proceed to step 8.
+Continue coding :D.
+
+IF THERE ARE ERRORS PLEASE CONTACT AND INFORM EVERYONE SO THAT WE CAN SOLVE IT TOGETHER!!  ( •̀ .̫ •́ )✧
