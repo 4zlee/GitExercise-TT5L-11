@@ -29,48 +29,10 @@
             <div class="form-group-name">
                 <input type="text" name="name" class="input_field" value="{{ student['name'] }}" placeholder="Name">
             </div>
-            <div class="form-group-class">
-                <label for="class_id">Class</label>
-                <select id="class_id" name="class_id" class="selection_box">
-                    {% for class in classes %}
-                        <option value="{{ class['class_id'] }}" {% if class['class_id'] == student['class_id'] %}selected{% endif %}>{{ class['class_name'] }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="form-group-group">
-                <label for="group_id">Group</label>
-                <select id="group_id" name="group_id" class="selection_box">
-                    {% for group in groups %}
-                        <option value="{{ group['group_id'] }}" {% if group['group_id'] == student['group_id'] %}selected{% endif %}>{{ group['group_name'] }}</option>
-                    {% endfor %}
-                </select>
+            <div class="form-group-name">
+                <input type="text" name="email" class="input_field" value="{{ student['email'] }}" placeholder="Email">
             </div>
             <button type="submit" class="btn btn-primary">Save</button>
         </form>
     </div>
-
-    <script>
-        document.getElementById('class_id').addEventListener('change', function() {
-            var classId = this.value;
-            var groupSelect = document.getElementById('group_id');
-            
-            // Clear the current group options
-            groupSelect.innerHTML = '<option value="">Select a group</option>';
-        
-            if (classId) {
-                // Fetch the groups for the selected class
-                fetch('/get_groups/' + classId)
-                    .then(response => response.json())
-                    .then(data => {
-                        data.groups.forEach(function(group) {
-                            var option = document.createElement('option');
-                            option.value = group.group_id;
-                            option.textContent = group.group_name;
-                            groupSelect.appendChild(option);
-                        });
-                    })
-                    .catch(error => console.error('Error fetching groups:', error));
-            }
-        });
-    </script>
 {% endblock %}

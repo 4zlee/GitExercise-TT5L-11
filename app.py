@@ -419,17 +419,16 @@ def students_list():
         cursor = conn.cursor()
         
         cursor.execute("""
-            SELECT Users.user_id, Users.name, Classes.class_name, Groups.group_name 
+            SELECT Users.user_id, Users.name, Users.email 
             FROM Users
-            LEFT JOIN group_members ON Users.user_id = group_members.user_id
-            LEFT JOIN Classes ON group_members.class_id = Classes.class_id
-            LEFT JOIN Groups ON group_members.group_id = Groups.group_id
-            WHERE Users.user_id IN (
+            INNER JOIN group_members ON Users.user_id = group_members.user_id
+            INNER JOIN Class_lecturers ON group_members.class_id = Class_lecturers.class_id
+            WHERE Class_lecturers.lecturer_id = ? AND Users.user_id IN (
                 SELECT user_id FROM User_roles WHERE role_id = (
                     SELECT role_id FROM Roles WHERE role_name = 'student'
                 )
             )
-        """)
+        """, (lecturer_id,))
         students = cursor.fetchall()
         conn.close()
         
@@ -447,16 +446,13 @@ def edit_students():
 
         if user_id:
             name = request.form['name']
-            class_id = request.form['class_id']
-            group_id = request.form['group_id']
+            email = request.form['email']
 
             conn = get_db_connection()
             cursor = conn.cursor()
             
             try:
-                cursor.execute("UPDATE Users SET name = ? WHERE user_id = ?", (name, user_id))
-                
-                cursor.execute("UPDATE group_members SET class_id = ?, group_id = ? WHERE user_id = ?", (class_id, group_id, user_id))
+                cursor.execute("UPDATE Users SET name = ?, email = ? WHERE user_id = ?", (name, email, user_id))
                 
                 conn.commit()
                 flash('Student details updated successfully', 'success')
@@ -477,28 +473,16 @@ def edit_students():
             conn = get_db_connection()
             cursor = conn.cursor()
             try:
-                cursor.execute("""
-                    SELECT Users.name, Classes.class_id, Groups.group_id, Classes.class_name, Groups.group_name
-                    FROM Users
-                    LEFT JOIN group_members ON Users.user_id = group_members.user_id
-                    LEFT JOIN Classes ON group_members.class_id = Classes.class_id
-                    LEFT JOIN Groups ON group_members.group_id = Groups.group_id
-                    WHERE Users.user_id = ?
-                """, (user_id,))
+                cursor.execute("SELECT Users.name, Users.email FROM Users WHERE Users.user_id = ?", (user_id,))
                 student = cursor.fetchone()
 
-                cursor.execute("SELECT class_id, class_name FROM Classes")
-                classes = cursor.fetchall()
-
-                cursor.execute("SELECT group_id, group_name FROM Groups")
-                groups = cursor.fetchall()
             except Exception as e:
                 flash(f'Error retrieving student details: {str(e)}', 'danger')
                 student = None
             finally:
                 conn.close()
 
-            return render_template('edit_students.html', student=student, classes=classes, groups=groups, user_id=user_id)
+            return render_template('edit_students.html', student=student, user_id=user_id)
         else:
             flash('User ID not provided', 'danger')
             return redirect(url_for('students_list'))
