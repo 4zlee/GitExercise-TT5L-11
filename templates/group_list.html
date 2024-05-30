@@ -1,0 +1,47 @@
+{% extends "layout_lect.html" %}
+
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+<title>Student Peer Review</title>    
+
+{% block title %}
+    Group List
+{% endblock %}
+{% block content %}
+    <div class="add_class">
+        <h1>Group List</h1>
+        {%block message%}
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}" role="alert">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        {%endblock%}
+        <table class="class_list">
+                <tr>
+                    <th>Course Name</th>
+                    <th>Group Name</th>
+                    <th>Group Members</th>
+                    <th>Actions</th>
+                </tr>
+                {% for member in group_members_stu %}
+                <tr>
+                    <td>{{ member['class_name'] }}</td>
+                    <td>{{ member['group_name'] }}</td>
+                    <td>{{ member['name'] }}</td>
+                    <td class="name">
+                        <a href="#">Edit</a>
+                        <a href="{{ url_for('delete_group', user_id=member['user_id']) }}" onclick="return confirm('Are you sure you want to delete this student?')">Delete</a>
+                    </td>
+                </tr>
+                {% endfor %}
+        </table>
+    </div>
+{% endblock %}

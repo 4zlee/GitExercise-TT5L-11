@@ -183,17 +183,8 @@ def signup_invited():
         name = request.form['name']
         email = request.form['email']
         password = request.form['password']
-        confirm_password = request.form['confirm_password']
         class_id = request.form['class_id']
         group_id = request.form['group_id']
-
-        if not name or not password or not confirm_password:
-            flash('All fields are required', 'error')
-            return redirect(url_for('signup_invited'))
-    
-        if password != confirm_password:
-            flash('Passwords do not match', 'error')
-            return redirect(url_for('signup_invited'))
 
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -260,21 +251,16 @@ def signup():
 def signup_post():
     name = request.form['name']
     password = request.form['password']
-    confirm_password = request.form['confirm_password']
     app_password = request.form['app_password']
     email = request.form['email']
     role = request.form['role']
     class_id = request.form.get('class_id')
     group_id = request.form.get('group_id')
 
-    if not name or not password or not confirm_password:
+    if not name or not password:
         flash('All fields are required', 'error')
         return redirect(url_for('signup'))
-    
-    if password != confirm_password:
-        flash('Passwords do not match', 'error')
-        return redirect(url_for('signup'))
-        
+
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -419,17 +405,16 @@ def students_list():
         cursor = conn.cursor()
         
         cursor.execute("""
-            SELECT Users.user_id, Users.name, Classes.class_name, Groups.group_name 
+            SELECT Users.user_id, Users.name, Users.email 
             FROM Users
-            LEFT JOIN group_members ON Users.user_id = group_members.user_id
-            LEFT JOIN Classes ON group_members.class_id = Classes.class_id
-            LEFT JOIN Groups ON group_members.group_id = Groups.group_id
-            WHERE Users.user_id IN (
+            INNER JOIN group_members ON Users.user_id = group_members.user_id
+            INNER JOIN Class_lecturers ON group_members.class_id = Class_lecturers.class_id
+            WHERE Class_lecturers.lecturer_id = ? AND Users.user_id IN (
                 SELECT user_id FROM User_roles WHERE role_id = (
                     SELECT role_id FROM Roles WHERE role_name = 'student'
                 )
             )
-        """)
+        """, (lecturer_id,))
         students = cursor.fetchall()
         conn.close()
         
@@ -447,16 +432,13 @@ def edit_students():
 
         if user_id:
             name = request.form['name']
-            class_id = request.form['class_id']
-            group_id = request.form['group_id']
+            email = request.form['email']
 
             conn = get_db_connection()
             cursor = conn.cursor()
             
             try:
-                cursor.execute("UPDATE Users SET name = ? WHERE user_id = ?", (name, user_id))
-                
-                cursor.execute("UPDATE group_members SET class_id = ?, group_id = ? WHERE user_id = ?", (class_id, group_id, user_id))
+                cursor.execute("UPDATE Users SET name = ?, email = ? WHERE user_id = ?", (name, email, user_id))
                 
                 conn.commit()
                 flash('Student details updated successfully', 'success')
@@ -477,28 +459,16 @@ def edit_students():
             conn = get_db_connection()
             cursor = conn.cursor()
             try:
-                cursor.execute("""
-                    SELECT Users.name, Classes.class_id, Groups.group_id, Classes.class_name, Groups.group_name
-                    FROM Users
-                    LEFT JOIN group_members ON Users.user_id = group_members.user_id
-                    LEFT JOIN Classes ON group_members.class_id = Classes.class_id
-                    LEFT JOIN Groups ON group_members.group_id = Groups.group_id
-                    WHERE Users.user_id = ?
-                """, (user_id,))
+                cursor.execute("SELECT Users.name, Users.email FROM Users WHERE Users.user_id = ?", (user_id,))
                 student = cursor.fetchone()
 
-                cursor.execute("SELECT class_id, class_name FROM Classes")
-                classes = cursor.fetchall()
-
-                cursor.execute("SELECT group_id, group_name FROM Groups")
-                groups = cursor.fetchall()
             except Exception as e:
                 flash(f'Error retrieving student details: {str(e)}', 'danger')
                 student = None
             finally:
                 conn.close()
 
-            return render_template('edit_students.html', student=student, classes=classes, groups=groups, user_id=user_id)
+            return render_template('edit_students.html', student=student, user_id=user_id)
         else:
             flash('User ID not provided', 'danger')
             return redirect(url_for('students_list'))
@@ -564,6 +534,137 @@ def join_group(group_id):
     flash(f'Joined group with ID: {group_id}', 'success')
     return redirect(url_for('home_stu'))
 
+@app.route('/group_list')
+def group_list():
+    lecturer_id = session.get('user_id')
+    
+    if lecturer_id:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT Users.user_id, Users.name, Classes.class_name, Groups.group_name 
+            FROM Users
+            INNER JOIN group_members ON Users.user_id = group_members.user_id
+            INNER JOIN Classes ON group_members.class_id = Classes.class_id
+            INNER JOIN Groups ON group_members.group_id = Groups.group_id
+            WHERE group_members.class_id IN (
+                SELECT class_id FROM Class_lecturers WHERE lecturer_id = ?
+            )
+            AND Users.user_id IN (
+                SELECT user_id FROM User_roles WHERE role_id = (
+                    SELECT role_id FROM Roles WHERE role_name = 'student'
+                )
+            )
+        """, (lecturer_id,))
+        group_members_stu = cursor.fetchall()
+        conn.close()
+        
+        # Debugging
+        print("Fetched students data:", group_members_stu)
+        
+        return render_template('group_list.html', group_members_stu=group_members_stu)
+    else:
+        return "No user logged in"
+    
+@app.route('/add_group')
+def add_group():
+    if "user_id" in session:
+        user_id = session["user_id"]
+
+        # Fetch classes from the database
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT class_id, class_name FROM Classes")
+        classes = cursor.fetchall()
+
+        # Fetch groups from the database (you may need to filter by the selected class)
+        cursor.execute("SELECT group_id, group_name FROM Groups")
+        groups = cursor.fetchall()
+
+        conn.close()
+
+        return render_template('add_group.html' , classes=classes, groups=groups)
+    else:
+        return redirect(url_for('login'))
+    
+@app.route('/edit_group/<group_id>', methods=['GET', 'POST'])
+def edit_group(group_id):
+    if request.method == 'POST':
+        new_group_name = request.form['group_name']
+        lecturer_id = session.get("user_id")
+        
+        if lecturer_id:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            try:
+                # Update group name in the database
+                cursor.execute("UPDATE Groups SET group_name = ? WHERE group_id = ?", (new_group_name, group_id))
+                conn.commit()
+                flash('Group updated successfully', 'success')
+            except Exception as e:
+                conn.rollback()
+                flash(f'Error updating group: {str(e)}', 'danger')
+            finally:
+                conn.close()
+            
+            return redirect(url_for('group_list'))
+        else:
+            flash("No user logged in", "danger")
+            return redirect(url_for('group_list'))
+    else:
+        lecturer_id = session.get("user_id")
+        
+        if lecturer_id:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            try:
+                # Retrieve group details from the database
+                cursor.execute("""
+                    SELECT Users.user_id, Users.name, Classes.class_name, Groups.group_name 
+                    FROM Users
+                    INNER JOIN group_members ON Users.user_id = group_members.user_id
+                    INNER JOIN Classes ON group_members.class_id = Classes.class_id
+                    INNER JOIN Groups ON group_members.group_id = Groups.group_id
+                    WHERE group_members.class_id IN (
+                        SELECT class_id FROM Class_lecturers WHERE lecturer_id = ?
+                    )
+                    AND Users.user_id IN (
+                        SELECT user_id FROM User_roles WHERE role_id = (
+                            SELECT role_id FROM Roles WHERE role_name = 'student'
+                        )
+                    )
+                    AND Groups.group_id = ?
+                """, (lecturer_id, group_id))
+                group_details = cursor.fetchone()
+                group_name = group_details['group_name'] if group_details else None
+            except Exception as e:
+                flash(f'Error retrieving group details: {str(e)}', 'danger')
+                group_name = None
+            finally:
+                conn.close()
+            
+            return render_template('edit_group.html', group_id=group_id, group_name=group_name)
+        else:
+            flash("No user logged in", "danger")
+            return redirect(url_for('group_list'))
+    
+
+@app.route('/delete_group/<int:user_id>')
+def delete_group(user_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        # Delete student from the database
+        cursor.execute("DELETE FROM group_members WHERE user_id = ?", (user_id,))
+        conn.commit()
+        flash('Student successfully deleted', 'success')
+    except Exception as e:
+        conn.rollback()
+        flash(f'Error deleting student: {str(e)}', 'danger')
+    finally:
+        conn.close()
+    return redirect(url_for('group_list'))
 @app.route('/logout')
 def logout():
     session.pop("user_id" , None)
