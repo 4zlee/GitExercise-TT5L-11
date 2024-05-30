@@ -1,5 +1,10 @@
 {% extends 'layout_lect.html' %}
 
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
 {% block title %}
     Add Group
 {% endblock %}
@@ -7,17 +12,54 @@
 {% block content %}
 <div class="add_student">
     <h2>Add Group</h2>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}" role="alert">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
     <form method="POST" action="{{ url_for('add_group') }}">
-        <div class="input">
-            <label for="class_id">Course Name:
-            <select name="class_id" id="class_id">
-                {% for class in classes %}
-                    <option value="{{ class.class_id }}">{{ class.class_name }}</option>
-                {% endfor %}
-            </select><br><br>
-            <input type="text" name="group_name" id="group_name" required placeholder="Group Name"><br><br>
-            <input type="submit" value="Add Group">
-        </label>
+        <label for="class_id">Class Name:</label>
+        <select name="class_id" id="class_id">
+            {% for class in classes %}
+                <option value="{{ class.class_id }}">{{ class.class_name }}</option>
+            {% endfor %}
+        </select><br>
+        <input type="text" name="group_name" id="group_name" required placeholder="Group Name"><br><br>
+
+    
+        <button type="submit" class="btn btn-primary">Add Group</button>
     </form>
 </div>
+
+<script>
+    document.getElementById('class_id').addEventListener('change', function() {
+        var classId = this.value;
+        var groupSelect = document.getElementById('group_id');
+        
+        // Clear the current group options
+        groupSelect.innerHTML = '<option value="">Select a group</option>';
+    
+        if (classId) {
+            // Fetch the groups for the selected class
+            fetch('/get_groups/' + classId)
+                .then(response => response.json())
+                .then(data => {
+                    data.groups.forEach(function(group) {
+                        var option = document.createElement('option');
+                        option.value = group.group_id;
+                        option.textContent = group.group_name;
+                        groupSelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error fetching groups:', error));
+        }
+    });
+    </script>
+
 {% endblock %}
