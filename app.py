@@ -403,27 +403,28 @@ def students_list():
     if lecturer_id:
         conn = get_db_connection()
         cursor = conn.cursor()
-        
+
         cursor.execute("""
-            SELECT Users.user_id, Users.name, Users.email 
+            SELECT Users.user_id, Users.name, Users.email, Classes.class_name
             FROM Users
             INNER JOIN group_members ON Users.user_id = group_members.user_id
-            INNER JOIN Class_lecturers ON group_members.class_id = Class_lecturers.class_id
-            WHERE Class_lecturers.lecturer_id = ? AND Users.user_id IN (
+            INNER JOIN Classes ON group_members.class_id = Classes.class_id
+            WHERE Classes.class_id IN (
+                SELECT class_id FROM Class_lecturers WHERE lecturer_id = ?
+            )
+            AND Users.user_id IN (
                 SELECT user_id FROM User_roles WHERE role_id = (
                     SELECT role_id FROM Roles WHERE role_name = 'student'
                 )
             )
+            GROUP BY Users.user_id, Users.name, Users.email
         """, (lecturer_id,))
         students = cursor.fetchall()
         conn.close()
         
-        # Debugging
-        print("Fetched students data:", students)
-        
         return render_template('students_list.html', students=students)
     else:
-        return "No user logged in"
+        return redirect(url_for('login'))
 
 @app.route('/edit_students', methods=['POST', 'GET'])
 def edit_students():
@@ -479,10 +480,9 @@ def delete_student(user_id):
     cursor = conn.cursor()
     try:
         # Delete student from the database
-        cursor.execute("DELETE FROM Users WHERE user_id = ?", (user_id,))
         cursor.execute("DELETE FROM group_members WHERE user_id = ?", (user_id,))
         conn.commit()
-        flash('Student successfully deleted', 'success')
+        flash('Student successfully removed', 'success')
     except Exception as e:
         conn.rollback()
         flash(f'Error deleting student: {str(e)}', 'danger')
@@ -658,7 +658,7 @@ def delete_group(user_id):
         # Delete student from the database
         cursor.execute("DELETE FROM group_members WHERE user_id = ?", (user_id,))
         conn.commit()
-        flash('Student successfully deleted', 'success')
+        flash('Student successfully removed', 'success')
     except Exception as e:
         conn.rollback()
         flash(f'Error deleting student: {str(e)}', 'danger')
