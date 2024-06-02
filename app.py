@@ -61,6 +61,9 @@ def send_email():
         class_id = request.form['class_id']
         group_id = request.form['group_id']
 
+        if not re.match(email_pattern, student_email):
+            flash('Invalid email address', 'danger')
+
         # Check if the student exists
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -206,6 +209,10 @@ def signup_invited():
             else:
                 cursor.execute("INSERT INTO group_members (user_id, group_id, class_id) VALUES (?, ?, ?)",
                             (existing_user_id, group_id, class_id))
+
+                cursor.execute("INSERT INTO Student_class (student_id, class_id) VALUES (?, ?)",
+                            (existing_user_id, class_id))
+
                 flash('Welcome back! Added to the group successfully', 'success')
 
             conn.commit()
@@ -228,6 +235,9 @@ def signup_invited():
                 # Add the new user to the specified group
                 cursor.execute("INSERT INTO group_members (user_id, group_id, class_id) VALUES (?, ?, ?)",
                                (user_id, group_id, class_id))
+
+                cursor.execute("INSERT INTO Student_class (student_id, class_id) VALUES (?, ?)",
+                            (user_id, class_id))
 
                 conn.commit()
                 flash('Signup successful!', 'success')
@@ -387,6 +397,10 @@ def delete_class(class_id):
     try:
         # Delete class from the database
         cursor.execute("DELETE FROM Classes WHERE class_id = ?", (class_id,))
+        cursor.execute("DELETE FROM Student_class WHERE class_id = ?", (class_id,))
+        cursor.execute("DELETE FROM Class_lecturers WHERE class_id = ?", (class_id,))
+        cursor.execute("DELETE FROM Groups WHERE class_id = ?", (class_id,))
+        cursor.execute("DELETE FROM group_members WHERE class_id = ?", (class_id,))
         conn.commit()
         flash('Class successfully deleted', 'success')
     except Exception as e:
@@ -405,10 +419,11 @@ def students_list():
         cursor = conn.cursor()
 
         cursor.execute("""
-            SELECT Users.user_id, Users.name, Users.email, Classes.class_name
+            SELECT Users.user_id, Users.name, Users.email, Classes.class_name, Groups.group_id
             FROM Users
-            INNER JOIN group_members ON Users.user_id = group_members.user_id
-            INNER JOIN Classes ON group_members.class_id = Classes.class_id
+            LEFT JOIN group_members ON Users.user_id = group_members.user_id
+            LEFT JOIN Classes ON group_members.class_id = Classes.class_id
+            LEFT JOIN Groups ON group_members.group_id = Groups.group_id
             WHERE Classes.class_id IN (
                 SELECT class_id FROM Class_lecturers WHERE lecturer_id = ?
             )
@@ -417,8 +432,8 @@ def students_list():
                     SELECT role_id FROM Roles WHERE role_name = 'student'
                 )
             )
-            GROUP BY Users.user_id, Users.name, Users.email
         """, (lecturer_id,))
+        #GROUP BY Users.user_id, Users.name, Users.email
         students = cursor.fetchall()
         conn.close()
         
@@ -474,15 +489,16 @@ def edit_students():
             flash('User ID not provided', 'danger')
             return redirect(url_for('students_list'))
         
-@app.route('/delete_student/<int:user_id>')
-def delete_student(user_id):
+@app.route('/delete_student/<int:user_id>/<int:group_id>')
+def delete_student(user_id, group_id):
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
         # Delete student from the database
-        cursor.execute("DELETE FROM group_members WHERE user_id = ?", (user_id,))
+        cursor.execute("DELETE FROM group_members WHERE user_id = ? AND group_id = ?", (user_id, group_id))
+        cursor.execute("DELETE FROM Student_class WHERE student_id = ?", (user_id,))
         conn.commit()
-        flash('Student successfully removed', 'success')
+        flash('Student successfully removed from class', 'success')
     except Exception as e:
         conn.rollback()
         flash(f'Error deleting student: {str(e)}', 'danger')
@@ -543,7 +559,7 @@ def group_list():
         cursor = conn.cursor()
         
         cursor.execute("""
-            SELECT Users.user_id, Users.name, Classes.class_name, Groups.group_name 
+            SELECT Users.user_id, Users.name, Classes.class_id, Classes.class_name, Groups.group_id, Groups.group_name 
             FROM Users
             INNER JOIN group_members ON Users.user_id = group_members.user_id
             INNER JOIN Classes ON group_members.class_id = Classes.class_id
@@ -569,8 +585,8 @@ def group_list():
     
 @app.route('/add_group')
 def add_group():
-    if "user_id" in session:
-        user_id = session["user_id"]
+    lecturer_id = session.get('user_id')
+    if lecturer_id:
 
         # Fetch classes from the database
         conn = get_db_connection()
@@ -621,7 +637,7 @@ def edit_group(group_id):
             try:
                 # Retrieve group details from the database
                 cursor.execute("""
-                    SELECT Users.user_id, Users.name, Classes.class_name, Groups.group_name 
+                    SELECT Users.user_id, Users.name, Classes.class_id, Classes.class_name, Groups.group_name 
                     FROM Users
                     INNER JOIN group_members ON Users.user_id = group_members.user_id
                     INNER JOIN Classes ON group_members.class_id = Classes.class_id
@@ -650,21 +666,21 @@ def edit_group(group_id):
             return redirect(url_for('group_list'))
     
 
-@app.route('/delete_group/<int:user_id>')
-def delete_group(user_id):
+@app.route('/delete_group/<int:group_id>/<string:class_id>')
+def delete_group(group_id, class_id):
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        # Delete student from the database
-        cursor.execute("DELETE FROM group_members WHERE user_id = ?", (user_id,))
+        cursor.execute("DELETE FROM group_members WHERE group_id = ? AND class_id = ?", (group_id, class_id))
         conn.commit()
         flash('Student successfully removed', 'success')
     except Exception as e:
         conn.rollback()
-        flash(f'Error deleting student: {str(e)}', 'danger')
+        flash(f'Error deleting group: {str(e)}', 'danger')
     finally:
         conn.close()
     return redirect(url_for('group_list'))
+
 @app.route('/logout')
 def logout():
     session.pop("user_id" , None)
