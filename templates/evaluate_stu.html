@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Evaluate Students</title>
+</head>
+<body>
+    <h1>Welcome, {{ user_name }}</h1>
+    <form method="post" action="{{ url_for('evaluate_stu') }}">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}" role="alert">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div>
+            <label for="class_id">Select Class:</label>
+            <select name="class_id" required>
+                <option value="">--Select Class--</option>
+                {% for class in classes %}
+                    <option value="{{ class['class_id'] }}">{{ class['class_name'] }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="group_id">Select Group:</label>
+            <select name="group_id" required></select>
+        </div>
+        <div>
+            <label for="evaluated_id">Select Student to Evaluate:</label>
+            <select name="evaluated_id" required></select>
+        </div>
+        <div>
+            <label for="rating">Rating (1-5):</label>
+            <input type="number" id="rating" name="rating" min="1" max="5" required>
+        </div>
+        <div>
+            <label for="comments">Comments:</label>
+            <textarea id="comments" name="comments"></textarea>
+        </div>
+        <button type="submit">Submit Evaluation</button>
+    </form>
+
+    <button type="button"><a href="{{ url_for('home_stu')}}">Back</a></button>
+</body>
+</html>
