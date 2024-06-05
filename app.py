@@ -13,6 +13,28 @@ app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 465
 app.config['MAIL_USE_SSL'] = True
 
+def normalize_rating(rating, old_min=0, old_max=5, new_min=0, new_max=3):
+    """
+    Normalize a rating from the old range (old_min, old_max) to the new range (new_min, new_max).
+    
+    Parameters:
+    rating (float): The rating to be normalized.
+    old_min (float): The minimum value of the old range. Default is 0.
+    old_max (float): The maximum value of the old range. Default is 5.
+    new_min (float): The minimum value of the new range. Default is 0.
+    new_max (float): The maximum value of the new range. Default is 3.
+    
+    Returns:
+    float: The normalized rating in the new range.
+    """
+    # Ensure the rating is within the old range
+    if rating < old_min or rating > old_max:
+        raise ValueError(f"Rating {rating} is out of bounds. It should be between {old_min} and {old_max}.")
+    
+    # Normalize the rating
+    normalized_rating = ((rating - old_min) / (old_max - old_min)) * (new_max - new_min) + new_min
+    return normalized_rating
+
 def get_lecturer_email(lecturer_id):
     conn = sqlite3.connect(DATABASE)
     cursor = conn.cursor()
@@ -122,6 +144,77 @@ def home_stu():
         return render_template('home_stu.html', user_name=user_name)
     else:
         return redirect(url_for('login'))
+
+@app.route('/evaluate_stu', methods=['GET', 'POST'])
+def evaluate_stu():
+    if request.method == 'POST':
+        evaluator_id = session.get('user_id')
+        evaluated_id = request.form['evaluated_id']
+        class_id = request.form['class_id']
+        group_id = request.form['group_id']
+        raw_rating = float(request.form['rating'])  # Convert rating to float
+        comments = request.form.get('comments', '')
+
+        try:
+            # Normalize the rating
+            rating = normalize_rating(raw_rating)
+        except ValueError as e:
+            flash(str(e), 'error')
+            return redirect(url_for('evaluate_stu'))
+
+        if not evaluated_id or not rating or not class_id or not group_id:
+            flash('All fields are required', 'error')
+            return redirect(url_for('evaluate_stu'))
+
+        # Check if evaluation already exists for this evaluator, evaluated, and group
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT COUNT(*)
+            FROM Evaluation
+            WHERE evaluator_id = ? AND evaluated_id = ? AND class_id = ? AND group_id = ?
+        """, (evaluator_id, evaluated_id, class_id, group_id))
+        evaluation_count = cursor.fetchone()[0]
+        conn.close()
+
+        if evaluation_count > 0:
+            flash('You have already evaluated this student for this group.', 'error')
+            return redirect(url_for('evaluate_stu'))
+
+        # If evaluation does not exist, insert the new evaluation
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute(
+            "INSERT INTO Evaluation (evaluator_id, evaluated_id, class_id, group_id, rating, comments) VALUES (?, ?, ?, ?, ?, ?)",
+            (evaluator_id, evaluated_id, class_id, group_id, rating, comments)
+        )
+        conn.commit()
+        conn.close()
+
+        flash('Evaluation submitted successfully!', 'success')
+        return redirect(url_for('evaluate_stu'))
+    else:
+        if "user_id" in session:
+            user_id = session["user_id"]
+            user_name = get_user_name(user_id)
+
+            conn = get_db_connection()
+            cursor = conn.cursor()
+
+            cursor.execute("""
+                SELECT Classes.class_id, Classes.class_name
+                FROM Classes
+                INNER JOIN group_members ON Classes.class_id = group_members.class_id
+                WHERE group_members.user_id = ?
+            """, (user_id,))
+            classes = cursor.fetchall()
+
+            conn.close()
+
+            return render_template('evaluate_stu.html', user_name=user_name, classes=classes)
+        else:
+            return redirect(url_for('login'))
 
 @app.route('/home_lec')
 def home_lec():
@@ -401,6 +494,7 @@ def delete_class(class_id):
         cursor.execute("DELETE FROM Class_lecturers WHERE class_id = ?", (class_id,))
         cursor.execute("DELETE FROM Groups WHERE class_id = ?", (class_id,))
         cursor.execute("DELETE FROM group_members WHERE class_id = ?", (class_id,))
+        cursor.execute("DELETE FROM Evaluation WHERE class_id = ?", (class_id))
         conn.commit()
         flash('Class successfully deleted', 'success')
     except Exception as e:
@@ -496,6 +590,7 @@ def delete_student(user_id, group_id):
     try:
         # Delete student from the database
         cursor.execute("DELETE FROM group_members WHERE user_id = ? AND group_id = ?", (user_id, group_id))
+        cursor.execute("DELETE FROM Evaluation WHERE evaluator_id = ? AND group_id = ?", (user_id, group_id))
         cursor.execute("DELETE FROM Student_class WHERE student_id = ?", (user_id,))
         conn.commit()
         flash('Student successfully removed from class', 'success')
@@ -672,6 +767,7 @@ def delete_group(group_id, class_id):
     cursor = conn.cursor()
     try:
         cursor.execute("DELETE FROM group_members WHERE group_id = ? AND class_id = ?", (group_id, class_id))
+        cursor.execute("DELETE FROM Evaluation WHERE group_id = ?", (group_id))
         conn.commit()
         flash('Student successfully removed', 'success')
     except Exception as e:
