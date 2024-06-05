@@ -632,6 +632,52 @@ def get_groups(class_id):
     conn.close()
     return jsonify({'groups': [{'group_id': group['group_id'], 'group_name': group['group_name']} for group in groups]})
 
+@app.route('/get_groups_stu/<class_id>', methods=['GET'])
+def get_groups_stu(class_id):
+    user_id = session.get('user_id')
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT Groups.group_id, Groups.group_name
+        FROM Groups
+        INNER JOIN group_members ON Groups.group_id = group_members.group_id
+        WHERE group_members.user_id = ? AND group_members.class_id = ?
+    """, (user_id, class_id))
+    
+    # Convert rows to dictionaries
+    groups_stu = [{'group_id': row['group_id'], 'group_name': row['group_name']} for row in cursor.fetchall()]
+
+    conn.close()
+
+    return jsonify({'groups': groups_stu})
+
+@app.route('/get_group_mates/<int:group_id>/<class_id>', methods=['GET'])
+def get_group_mates(group_id, class_id):
+    user_id = session.get('user_id')
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT Users.user_id, Users.name
+        FROM Users
+        INNER JOIN group_members ON Users.user_id = group_members.user_id
+        WHERE group_members.group_id = ? AND group_members.class_id = ? AND Users.user_id != ?
+    """, (group_id, class_id, user_id))
+    students_data = cursor.fetchall()
+
+    cursor.execute("SELECT user_id, name FROM Users WHERE user_id = ?", (user_id,))
+    self_data = cursor.fetchone()
+    
+    students = [{'user_id': row['user_id'], 'name': row['name']} for row in students_data]
+    students.append({'user_id': self_data['user_id'], 'name': self_data['name']})
+
+    conn.close()
+
+    return jsonify({'students': students})
+
 @app.route('/join_class/<class_id>')
 def join_class(class_id):
     # Logic to join the class...
