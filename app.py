@@ -145,6 +145,71 @@ def home_stu():
     else:
         return redirect(url_for('login'))
 
+
+
+
+
+@app.route('/select_class', methods=['GET', 'POST'])
+def select_class():
+    if "user_id" not in session:
+        return redirect(url_for('login'))
+
+    user_id = session["user_id"]
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Get the list of classes the student is enrolled in
+    cursor.execute("""
+        SELECT c.class_id, c.class_name
+        FROM Student_class sc
+        JOIN Classes c ON sc.class_id = c.class_id
+        WHERE sc.student_id = ?
+    """, (user_id,))
+    classes = cursor.fetchall()
+
+    if request.method == 'POST':
+        class_id = request.form['class_id']
+
+        # Fetch the group information for the selected class
+        cursor.execute("""
+            SELECT g.group_id, g.group_name
+            FROM group_members gm
+            JOIN Groups g ON gm.group_id = g.group_id
+            WHERE gm.user_id = ? AND gm.class_id = ?
+        """, (user_id, class_id))
+        group = cursor.fetchone()
+
+        if group:
+            group_id = group['group_id']
+            return redirect(url_for('confirm_group', class_id=class_id, group_id=group_id))
+
+    conn.close()
+    return render_template('select_class.html', classes=classes)
+
+@app.route('/confirm_group/<class_id>/<group_id>', methods=['GET', 'POST'])
+def confirm_group(class_id, group_id):
+    if "user_id" not in session:
+        return redirect(url_for('login'))
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Get group and class information
+    cursor.execute("""
+        SELECT g.group_name, c.class_name
+        FROM Groups g
+        JOIN Classes c ON g.class_id = c.class_id
+        WHERE g.group_id = ? AND c.class_id = ?
+    """, (group_id, class_id))
+    group_info = cursor.fetchone()
+
+    conn.close()
+
+    if request.method == 'POST':
+        return 'YES'
+
+    return render_template('confirm_group.html', group_name=group_info['group_name'], class_name=group_info['class_name'], class_id=class_id, group_id=group_id)
+
 @app.route('/evaluate_stu', methods=['GET', 'POST'])
 def evaluate_stu():
     if request.method == 'POST':
