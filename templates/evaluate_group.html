@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+<head>
+    <title>Evaluate Groupmates</title>
+</head>
+<body>
+    <h1>Evaluate Groupmates for {{ class_name }} - {{ group_name }}</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}" role="alert">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('evaluate_group', class_id=class_id, group_id=group_id) }}">
+        {% for groupmate in groupmates %}
+        <div>
+            <label>{{ groupmate['name'] }}</label>
+            <input type="hidden" name="evaluated_id" value="{{ groupmate['user_id'] }}">
+            <!-- Display previous rating and comments within input fields -->
+            <input type="number" name="rating" min="1" max="5" step="0.1" value="{% for row in evaluation_data %}{% if row['evaluated_id'] == groupmate['user_id'] %}{{ row['rating'] }}{% endif %}{% endfor %}" required>
+            <textarea name="comment" placeholder="Enter your comments">{% for row in evaluation_data %}{% if row['evaluated_id'] == groupmate['user_id'] %}{{ row['comments'] }}{% endif %}{% endfor %}</textarea>
+        </div>
+        {% endfor %}
+        <div>
+            <!-- Self-reflection section -->
+            <h2>Self-Reflection</h2>
+            <label>Write a brief summary of your group work and the activities involved.</label>
+            <textarea name="comments_self01" placeholder="Enter your comments">{{ evaluation_self_data['comments_self01'] }}</textarea>
+            <label>What challenges did you face in this group work and what have you learned from it and what would you do differently if given the chance to do this again?</label>
+            <textarea name="comments_self02" placeholder="Enter your comments">{{ evaluation_self_data['comments_self02'] }}</textarea>
+            <label>What was your role in the group and how did it help your learning?</label>
+            <textarea name="comments_self03" placeholder="Enter your comments">{{ evaluation_self_data['comments_self03'] }}</textarea>
+            <label>Feedback / other comments on group work</label>
+            <textarea name="comments_self04" placeholder="Enter your comments">{{ evaluation_self_data['comments_self04'] }}</textarea>
+        </div>
+        <button type="submit">Submit Ratings</button>
+        <button class="button"><a href="{{ url_for('home_stu')}}">Home</a></button>
+    </form>
+</body>
+</html>

@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Rating Results</title>
+</head>
+<body>
+    <h1>Adjusted Ratings</h1>
+    <p><strong>WARNIG!</strong> the adjusted rating will change over the course of time.</p>
+    <table>
+        <tr>
+            <th>Student ID</th>
+            <th>Adjusted Rating</th>
+        </tr>
+        {% for (evaluator_id, student_id), adjusted_rating in adjusted_ratings.items() %}
+            {% if evaluator_id == current_user_id %}
+                <tr>
+                    <td>{{ student_names[student_id] }}</td>
+                    <td>{{ adjusted_rating }}</td>
+                </tr>
+            {% endif %}
+        {% endfor %}
+    </table>
+    <form method="POST" action="{{ url_for('rating_result') }}">
+        <input type="hidden" name="class_id" value="{{ class_id }}">
+        <input type="hidden" name="group_id" value="{{ group_id }}">
+        <button type="submit" name="action" value="proceed">Proceed</button>
+        <button type="submit" name="action" value="re_rate">Re-rate</button>
+    </form>
+</body>
+</html>
