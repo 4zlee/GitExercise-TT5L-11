@@ -1,0 +1,14 @@
+<!doctype html>
+<html>
+<head>
+    <title>Confirm Group</title>
+</head>
+<body>
+    <h1>Confirm Group</h1>
+    <p>Class: {{ class_name }}</p>
+    <p>Group: {{ group_name }}</p>
+    <form method="POST" action="{{ url_for('confirm_group', class_id=class_id, group_id=group_id) }}">
+        <button type="submit">Proceed to Evaluation</button>
+    </form>
+</body>
+</html>
