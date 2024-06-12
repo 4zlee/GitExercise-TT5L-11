@@ -34,8 +34,8 @@ body {
 .wrapper {
     margin-top: 150px;
     position: center;
-    width: 400px;
-    height: 460px;
+    width: auto;
+    height: auto;
     background: white;
     color: black;
     border: 2px solid rgba(255, 255, 255, .2);
