@@ -1,15 +1,9 @@
 {% extends "layout_lect.html" %}
 
-<meta charset="UTF-8">
-<meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-
-<title>Edit Group</title>    
-
 {% block title %}
     Edit Group
 {% endblock %}
+
 {% block content %}
     <div class="edit_group">
         <h1>Edit Group</h1>
@@ -24,26 +18,25 @@
             {% endif %}
         {% endwith %}
 
-        
-        <form method="POST" action="{{ url_for('edit_group') }}">
-            <input type="hidden" name="user_id" value="{{ user_id }}">
+        <form method="POST" action="{{ url_for('edit_group', group_id=group_id) }}">
             <div class="form-group">
-                <label for="class_id">Class</label>
-                <select name="class_id" class="form-control">
-                    {% for class in classes %}
-                        <option value="{{ class['class_id'] }}" {% if class['class_id'] == student['class_id'] %}selected{% endif %}>{{ class['class_name'] }}</option>
-                    {% endfor %}
-                </select>
+                <label for="group_name">Group Name</label>
+                <input type="text" name="group_name" class="form-control" id="group_name" value="{{ group_name }}" required>
             </div>
             <div class="form-group">
-                <label for="group_id">Group</label>
-                <select name="group_id" class="form-control">
-                    {% for group in groups %}
-                        <option value="{{ group['group_id'] }}" {% if group['group_id'] == student['group_id'] %}selected{% endif %}>{{ group['group_name'] }}</option>
-                    {% endfor %}
-                </select>
+                <label for="new_member">Add New Member</label>
+                <input type="email" name="new_member" class="form-control" id="new_member" placeholder="Enter member's email">
             </div>
-            <button type="submit" class="btn btn-primary">Save</button>
+            <h3>Group Members</h3>
+            <table class="list-group">
+                {% for member in group_members %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ member['email'] }}
+                        <a href="{{ url_for('remove_member', group_id=group_id, user_id=member['user_id']) }}" class="btn btn-danger btn-sm">Remove</a>
+                    </li>
+                {% endfor %}
+                </table>
+            <button type="submit" class="btn btn-primary mt-3">Save</button>
         </form>
     </div>
 {% endblock %}
