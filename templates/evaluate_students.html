@@ -1,0 +1,54 @@
+{% extends "layout_lect.html" %}
+
+{% block title %}
+    Evaluate Students
+{% endblock %}
+
+{% block content %}
+    <div class="evaluate_students">
+        <h1>Evaluate Students</h1>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}" role="alert">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('evaluate_students', class_id=class_id, group_id=group_id) }}">
+            <h2>Student Self-Evaluations</h2>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Student Name</th>
+                        <th scope="col">Question 1</th>
+                        <th scope="col">Question 2</th>
+                        <th scope="col">Question 3</th>
+                        <th scope="col">Question 4</th>
+                        <th scope="col">Rating</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for self_eval in self_evaluations %}
+                        <tr>
+                            <td>{{ self_eval['name'] }}</td>
+                            <td>{{ self_eval['comments_self01'] }}</td>
+                            <td>{{ self_eval['comments_self02'] }}</td>
+                            <td>{{ self_eval['comments_self03'] }}</td>
+                            <td>{{ self_eval['comments_self04'] }}</td>
+                            <td>
+                                <input type="number" name="{{ self_eval['user_id'] }}" class="form-control" min="1" max="5" required>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <button type="submit" class="btn btn-primary">Submit Evaluation</button>
+        </form>
+
+        <a href="{{ url_for('export_group', class_id=class_id, group_id=group_id) }}" class="btn btn-secondary mt-3">Export to CSV</a>
+    </div>
+{% endblock %}

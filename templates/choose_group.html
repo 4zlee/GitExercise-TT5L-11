@@ -1,0 +1,34 @@
+{% extends "layout_lect.html" %}
+
+{% block title %}
+    Choose Group
+{% endblock %}
+
+{% block content %}
+    <div class="choose_group">
+        <h1>Choose Group</h1>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}" role="alert">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('choose_group', class_id=class_id) }}">
+            <div class="form-group">
+                <label for="group_id">Select Group</label>
+                <select name="group_id" class="form-control" required>
+                    <option value="">-- Select Group --</option>
+                    {% for group in groups %}
+                        <option value="{{ group['group_id'] }}">{{ group['group_name'] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Evaluate Students</button>
+        </form>
+    </div>
+{% endblock %}
