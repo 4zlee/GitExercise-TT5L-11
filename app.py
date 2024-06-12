@@ -272,14 +272,14 @@ def evaluate_group(class_id, group_id):
             cursor.execute("""
                 UPDATE Evaluate_self
                 SET comments_self01 = ?, comments_self02 = ?, comments_self03 = ?, comments_self04 = ?
-                WHERE evaluator_id = ?
-            """, (comments_self01, comments_self02, comments_self03, comments_self04, user_id))
+                WHERE evaluator_id = ? AND class_id = ? AND group_id = ?
+            """, (comments_self01, comments_self02, comments_self03, comments_self04, user_id, class_id, group_id,))
         else:
             # Insert new self-evaluation
             cursor.execute("""
-                INSERT INTO Evaluate_self (evaluator_id, comments_self01, comments_self02, comments_self03, comments_self04)
-                VALUES (?, ?, ?, ?, ?)
-            """, (user_id, comments_self01, comments_self02, comments_self03, comments_self04))
+                INSERT INTO Evaluate_self (evaluator_id, class_id, group_id, comments_self01, comments_self02, comments_self03, comments_self04)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (user_id, class_id, group_id, comments_self01, comments_self02, comments_self03, comments_self04))
 
         conn.commit()
 
