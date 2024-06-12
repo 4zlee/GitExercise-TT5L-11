@@ -1,8 +1,18 @@
 <!doctype html>
+<meta charset="UTF-8">
+<meta http-equiv="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style_SelectClassPage.css') }}">
 <html>
+
 <head>
     <title>Select Class</title>
 </head>
+
+<nav class="MMU-logo">
+    <a href='#' class="logo"><img src="/static/MMUlogo.png" alt="MMU Logo" style="width:50%;height:auto;"></a>
+</nav>
+
+<nav class="wrapper">
 <body>
     <h1>Select Class</h1>
     <form method="POST" action="{{ url_for('select_class') }}">
@@ -12,7 +22,8 @@
                 <option value="{{ class.class_id }}">{{ class.class_name }}</option>
             {% endfor %}
         </select>
-        <button type="submit">Proceed</button>
+        <button class="button">Proceed</button>
+</nav>
     </form>
 </body>
 </html>

@@ -1,14 +1,24 @@
 <!doctype html>
 <html>
+    <meta charset="utf-8">
+    <meta http-equiv="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style_SelectClassPage.css') }}">
 <head>
     <title>Confirm Group</title>
 </head>
+
+<nav class="MMU-logo">
+    <a href='#' class="logo"><img src="/static/MMUlogo.png" alt="MMU Logo" style="width:50%;height:auto;"></a>
+</nav>
+
+<nav class="wrapper">
 <body>
     <h1>Confirm Group</h1>
     <p>Class: {{ class_name }}</p>
     <p>Group: {{ group_name }}</p>
     <form method="POST" action="{{ url_for('confirm_group', class_id=class_id, group_id=group_id) }}">
-        <button type="submit">Proceed to Evaluation</button>
+        <button class="button">Proceed to Evaluation</button> 
     </form>
+</nav>
 </body>
 </html>
