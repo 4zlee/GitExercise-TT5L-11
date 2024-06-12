@@ -1,18 +1,30 @@
 <!doctype html>
 <html lang="en">
+<meta charset="UTF-8">
+<meta http-equiv="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style_SelectClassPage.css') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Upload Students</title>
 </head>
+
+<nav class="MMU-logo">
+    <a href='#' class="logo"><img src="/static/MMUlogo.png" alt="MMU Logo" style="width:50%;height:auto;"></a>
+</nav>
+
+<nav class="wrapper">
 <body>
+    <nav class="message">
     <h1>Upload Students</h1>
     <form action="{{ url_for('upload_students') }}" method="post" enctype="multipart/form-data">
         <div>
             <label for="file">CSV file</label>
             <input type="file" name="file" id="file" required>
         </div>
-        <button type="submit">Upload</button>
+    </nav>
+        <button class="button">Upload</button>
     </form>
+</nav>    
 </body>
 </html>

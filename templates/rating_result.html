@@ -2,11 +2,19 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
+    <meta http-equiv="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style_RatingResultPage.css') }}">
     <title>Rating Results</title>
 </head>
+
+<nav class="MMU-logo">
+    <a href='#' class="logo"><img src="/static/MMUlogo.png" alt="MMU Logo" style="width:50%;height:auto;"></a>
+</nav>
+
 <body>
+    <nav class="wrapper">
     <h1>Adjusted Ratings</h1>
-    <p><strong>WARNIG!</strong> the adjusted rating will change over the course of time.</p>
+    <p><strong>WARNING!</strong> the adjusted rating will change over the course of time.</p>
     <table>
         <tr>
             <th>Student ID</th>
@@ -24,8 +32,9 @@
     <form method="POST" action="{{ url_for('rating_result') }}">
         <input type="hidden" name="class_id" value="{{ class_id }}">
         <input type="hidden" name="group_id" value="{{ group_id }}">
-        <button type="submit" name="action" value="proceed">Proceed</button>
-        <button type="submit" name="action" value="re_rate">Re-rate</button>
+        <button class="button" name="action" value="proceed">Proceed</button>
+        <button class="button" name="action" value="re_rate">Re-rate</button>
     </form>
+</nav>
 </body>
 </html>
