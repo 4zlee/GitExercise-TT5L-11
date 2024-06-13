@@ -1,5 +1,12 @@
 {% extends "layout_lect.html" %}
 
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel='stylesheet' href='https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css'>
+
+<title>Student Peer Review</title> 
+
 {% block title %}
     Choose Group
 {% endblock %}
@@ -21,14 +28,14 @@
         <form method="POST" action="{{ url_for('choose_group', class_id=class_id) }}">
             <div class="form-group">
                 <label for="group_id">Select Group</label>
-                <select name="group_id" class="form-control" required>
+                <select name="group_id" id="group_id" class="form-control" required>
                     <option value="">-- Select Group --</option>
                     {% for group in groups %}
                         <option value="{{ group['group_id'] }}">{{ group['group_name'] }}</option>
                     {% endfor %}
                 </select>
             </div>
-            <button type="submit" class="btn btn-primary">Evaluate Students</button>
+            <button type="submit" class="btn btn-primary">Next</button>
         </form>
     </div>
 {% endblock %}
