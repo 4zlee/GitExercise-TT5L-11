@@ -32,7 +32,7 @@
                 <thead>
                     <tr>
                         <th scope="col">Student Name</th>
-                        <th scope="col">Adjusted Rating</th>
+                        <th scope="col">Average Adjusted Rating</th>
                         <th scope="col">Question 1</th>
                         <th scope="col">Question 2</th>
                         <th scope="col">Question 3</th>
@@ -41,21 +41,20 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for self_eval in self_evaluations %}
+                    {% for name, data in evaluations.items() %}
                         <tr>
-                            <td class="name">{{ self_eval['name'] }}</td>
-                            <td class="name">{{ self_eval['adjusted_rating'] if self_eval['adjusted_rating'] is not none else 'N/A' }}</td>
-                            <td class="name">{{ self_eval['comments_self01'] }}</td>
-                            <td class="name">{{ self_eval['comments_self02'] }}</td>
-                            <td class="name">{{ self_eval['comments_self03'] }}</td>
-                            <td class="name">{{ self_eval['comments_self04'] }}</td>
+                            <td class="name">{{ name }}</td>
+                            <td>{{ '%.2f' % data['average_adjusted_rating'] if data['average_adjusted_rating'] is not none else 'N/A' }}</td>
+                            <td class="name">{{ data['comments'][0] }}</td>
+                            <td class="name">{{ data['comments'][1] }}</td>
+                            <td class="name">{{ data['comments'][2] }}</td>
+                            <td class="name">{{ data['comments'][3] }}</td>
                             <td class="name">
-                                <input type="number" name="{{ self_eval['user_id'] }}" class="form-control" min="1" max="5" required>
+                                <input type="number" name="rating_{{ data['user_id'] }}" class="form-control" min="1" max="5" required>
                             </td>
                         </tr>
                     {% endfor %}
                 </tbody>
-                
             </table>
             <button type="submit" class="btn btn-primary">Submit Evaluation</button>
         </form>

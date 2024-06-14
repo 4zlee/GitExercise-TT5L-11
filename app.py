@@ -5,6 +5,7 @@ import re
 import pandas as pd
 from flask_mail import Mail, Message
 import csv
+import io
 import os
 
 app = Flask(__name__)
@@ -380,6 +381,7 @@ def rating_result():
     elif action == 're_rate':
         return redirect(url_for('evaluate_group', class_id=class_id, group_id=group_id))
 
+
 @app.route('/evaluate_students/<string:class_id>/<string:group_id>', methods=['GET', 'POST'])
 def evaluate_students(class_id, group_id):
     if request.method == 'POST':
@@ -395,12 +397,14 @@ def evaluate_students(class_id, group_id):
         conn = get_db_connection()
         cursor = conn.cursor()
         try:
-            for student_id, evaluations in student_evaluations.items():
-                evaluation = evaluations[0]  # Get the first item in the list
-                cursor.execute(
-                    "INSERT INTO Evaluate_lect (evaluator_lect_id, evaluated_id, class_id, group_id, rating_lect) "
-                    "VALUES (?, ?, ?, ?, ?)",
-                    (lecturer_id, student_id, class_id, group_id, evaluation))
+            for key, evaluations in student_evaluations.items():
+                if key.startswith('rating_'):
+                    student_id = key.split('_')[1]
+                    evaluation = evaluations[0]  # Get the first item in the list
+                    cursor.execute(
+                        "INSERT INTO Evaluate_lect (evaluator_lect_id, evaluated_id, class_id, group_id, rating_lect) "
+                        "VALUES (?, ?, ?, ?, ?)",
+                        (lecturer_id, student_id, class_id, group_id, evaluation))
             conn.commit()
             flash('Student evaluations submitted successfully', 'success')
         except Exception as e:
@@ -419,26 +423,48 @@ def evaluate_students(class_id, group_id):
         conn = get_db_connection()
         cursor = conn.cursor()
         try:
-            # Retrieve self-evaluations
+            # Retrieve self-evaluations and adjusted ratings
             cursor.execute(
                 "SELECT Users.user_id, Users.name, Evaluate_self.comments_self01, Evaluate_self.comments_self02, "
-                "Evaluate_self.comments_self03, Evaluate_self.comments_self04 "
-                "FROM Evaluate_self "
-                "INNER JOIN Users ON Evaluate_self.evaluator_id = Users.user_id "
+                "Evaluate_self.comments_self03, Evaluate_self.comments_self04, Evaluation.adjusted_rating "
+                "FROM Users "
+                "INNER JOIN Evaluate_self ON Users.user_id = Evaluate_self.evaluator_id "
+                "LEFT JOIN Evaluation ON Users.user_id = Evaluation.evaluated_id AND Evaluation.class_id = ? AND Evaluation.group_id = ? "
                 "WHERE Users.user_id IN (SELECT user_id FROM group_members WHERE class_id = ? AND group_id = ?)",
-                (class_id, group_id))
-            self_evaluations = cursor.fetchall()
+                (class_id, group_id, class_id, group_id))
+            evaluations = cursor.fetchall()
+
+            # Group evaluations by student name and calculate average adjusted rating
+            grouped_evaluations = {}
+            for eval in evaluations:
+                if eval['name'] not in grouped_evaluations:
+                    grouped_evaluations[eval['name']] = {
+                        'user_id': eval['user_id'],
+                        'comments': [eval['comments_self01'], eval['comments_self02'], eval['comments_self03'], eval['comments_self04']],
+                        'adjusted_ratings': [],
+                        'average_adjusted_rating': 0
+                    }
+                if eval['adjusted_rating'] is not None:
+                    grouped_evaluations[eval['name']]['adjusted_ratings'].append(eval['adjusted_rating'])
+                # Calculate average adjusted rating
+                ratings = grouped_evaluations[eval['name']]['adjusted_ratings']
+                grouped_evaluations[eval['name']]['average_adjusted_rating'] = sum(ratings) / len(ratings) if ratings else None
+
         except Exception as e:
             flash(f'Error retrieving students: {str(e)}', 'danger')
-            self_evaluations = []
+            grouped_evaluations = {}
         finally:
             conn.close()
 
-        return render_template('evaluate_students.html', class_id=class_id, group_id=group_id, self_evaluations=self_evaluations)
-
+        return render_template('evaluate_students.html', class_id=class_id, group_id=group_id, evaluations=grouped_evaluations)
 
 @app.route('/choose_class', methods=['GET', 'POST'])
 def choose_class():
+    lecturer_id = session.get("user_id")
+    if not lecturer_id:
+        flash("No user logged in", "danger")
+        return redirect(url_for('login'))
+
     if request.method == 'POST':
         selected_class_id = request.form.get('class_id')
 
@@ -447,14 +473,17 @@ def choose_class():
         else:
             flash('Please select a class', 'danger')
 
-    # Retrieve available classes
+    # Retrieve classes taught by the lecturer
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        cursor.execute("SELECT class_id, class_name FROM classes")
+        cursor.execute("SELECT Classes.class_id, Classes.class_name "
+                       "FROM Classes "
+                       "INNER JOIN Class_lecturers ON Classes.class_id = Class_lecturers.class_id "
+                       "WHERE Class_lecturers.lecturer_id = ?", (lecturer_id,))
         classes = cursor.fetchall()
     except Exception as e:
-        flash(f'Error retrieving classes: {str(e)}', 'danger')
+        flash(f'Error retrieving classes taught by lecturer: {str(e)}', 'danger')
         classes = []
     finally:
         conn.close()
@@ -487,33 +516,64 @@ def choose_group(class_id):
 
 @app.route('/export_group/<string:class_id>/<string:group_id>', methods=['GET'])
 def export_group(class_id, group_id):
+    # Check if evaluations have been submitted for the specified class and group
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT COUNT(*) FROM Evaluate_lect WHERE class_id = ? AND group_id = ?", (class_id, group_id))
+        evaluations_count = cursor.fetchone()[0]
+    except Exception as e:
+        flash(f'Error checking evaluations: {str(e)}', 'danger')
+        evaluations_count = 0
+    finally:
+        conn.close()
+
+    if evaluations_count == 0:
+        flash('Please evaluate the students first before exporting', 'danger')
+        return redirect(url_for('evaluate_students', class_id=class_id, group_id=group_id))
+
     # Retrieve group details from the database
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
         cursor.execute("""
-            SELECT Users.user_id, Users.name, Users.email 
+            SELECT Users.email, Classes.class_name, Groups.group_name, 
+                   ROUND(AVG(Evaluation.adjusted_rating), 2) AS average_adjusted_rating,
+                   ROUND(Evaluate_lect.rating_lect, 2) AS lecturer_rating
             FROM Users
             INNER JOIN group_members ON Users.user_id = group_members.user_id
+            INNER JOIN Classes ON group_members.class_id = Classes.class_id
+            INNER JOIN Groups ON group_members.group_id = Groups.group_id
+            LEFT JOIN Evaluation ON Users.user_id = Evaluation.evaluated_id AND Evaluation.class_id = ? AND Evaluation.group_id = ?
+            LEFT JOIN Evaluate_lect ON Users.user_id = Evaluate_lect.evaluated_id AND Evaluate_lect.class_id = ? AND Evaluate_lect.group_id = ?
             WHERE group_members.class_id = ? AND group_members.group_id = ?
-        """, (class_id, group_id))
+            GROUP BY Users.email, Classes.class_name, Groups.group_name, Evaluate_lect.rating_lect
+        """, (class_id, group_id, class_id, group_id, class_id, group_id))
         group_members = cursor.fetchall()
+
+        # Get group name for the CSV file name
+        cursor.execute("SELECT group_name FROM Groups WHERE group_id = ?", (group_id,))
+        group_name = cursor.fetchone()[0]
     except Exception as e:
         flash(f'Error retrieving group details: {str(e)}', 'danger')
         group_members = []
+        group_name = 'group_members'
     finally:
         conn.close()
 
     # Create a CSV response
-    output = make_response()
+    output = io.StringIO()
     writer = csv.writer(output)
-    writer.writerow(['User ID', 'Name', 'Email'])  # Header row
+    writer.writerow(['Email', 'Class Name', 'Group Name', 'Average Adjusted Rating', 'Lecturer Rating'])  # Header row
     for member in group_members:
-        writer.writerow([member['user_id'], member['name'], member['email']])
+        writer.writerow([member['email'], member['class_name'], member['group_name'], member['average_adjusted_rating'], member['lecturer_rating']])
 
-    output.headers["Content-Disposition"] = "attachment; filename=group_members.csv"
-    output.headers["Content-type"] = "text/csv"
-    return output
+    output.seek(0)
+    response = make_response(output.getvalue())
+    response.headers["Content-Disposition"] = f"attachment; filename={group_name}.csv"
+    response.headers["Content-type"] = "text/csv"
+    return response
+
 
 
 @app.route('/home_lec')
@@ -1178,71 +1238,82 @@ def add_group():
     
 @app.route('/edit_group/<group_id>', methods=['GET', 'POST'])
 def edit_group(group_id):
+    lecturer_id = session.get("user_id")
+    
+    if not lecturer_id:
+        flash("No user logged in", "danger")
+        return redirect(url_for('group_list'))
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
     if request.method == 'POST':
         new_group_name = request.form['group_name']
         new_member_email = request.form.get('new_member')
-        lecturer_id = session.get("user_id")
         
-        if lecturer_id:
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            try:
-                # Update group name in the database
-                cursor.execute("UPDATE Groups SET group_name = ? WHERE group_id = ?", (new_group_name, group_id))
-                
-                # Add new member if provided
-                if new_member_email:
-                    cursor.execute("SELECT user_id FROM Users WHERE email = ?", (new_member_email,))
-                    user = cursor.fetchone()
-                    if user:
-                        user_id = user['user_id']
-                        cursor.execute("INSERT INTO group_members (group_id, user_id) VALUES (?, ?)", (group_id, user_id))
-                        flash(f'Added new member: {new_member_email}', 'success')
-                    else:
-                        flash(f'User with email {new_member_email} not found', 'danger')
-
-                conn.commit()
-                flash('Group updated successfully', 'success')
-            except Exception as e:
-                conn.rollback()
-                flash(f'Error updating group: {str(e)}', 'danger')
-            finally:
-                conn.close()
-            
+        if not new_group_name:
+            flash("Group name cannot be empty", 'danger')
             return redirect(url_for('edit_group', group_id=group_id))
-        else:
-            flash("No user logged in", "danger")
-            return redirect(url_for('group_list'))
-    else:
-        lecturer_id = session.get("user_id")
-        
-        if lecturer_id:
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            try:
-                # Retrieve group details from the database
-                cursor.execute("SELECT group_name FROM Groups WHERE group_id = ?", (group_id,))
-                group_details = cursor.fetchone()
-                group_name = group_details['group_name'] if group_details else None
 
-                cursor.execute("""
-                    SELECT Users.user_id, Users.email
-                    FROM Users
-                    INNER JOIN group_members ON Users.user_id = group_members.user_id
-                    WHERE group_members.group_id = ?
-                """, (group_id,))
-                group_members = cursor.fetchall()
-            except Exception as e:
-                flash(f'Error retrieving group details: {str(e)}', 'danger')
-                group_name = None
-                group_members = []
-            finally:
-                conn.close()
-            
-            return render_template('edit_group.html', group_id=group_id, group_name=group_name, group_members=group_members)
-        else:
-            flash("No user logged in", "danger")
-            return redirect(url_for('group_list'))
+        try:
+            # Get class_id for the group
+            cursor.execute("SELECT class_id FROM Groups WHERE group_id = ?", (group_id,))
+            group_details = cursor.fetchone()
+            class_id = group_details['class_id'] if group_details else None
+
+            if class_id is None:
+                flash('Class ID not found for the group', 'danger')
+                return redirect(url_for('edit_group', group_id=group_id))
+
+            # Update group name in the database
+            cursor.execute("UPDATE Groups SET group_name = ? WHERE group_id = ?", (new_group_name, group_id))
+
+            # Add new member if provided
+            if new_member_email:
+                cursor.execute("SELECT user_id FROM Users WHERE email = ?", (new_member_email,))
+                user = cursor.fetchone()
+                if user:
+                    user_id = user['user_id']
+                    cursor.execute("INSERT INTO group_members (group_id, user_id, class_id) VALUES (?, ?, ?)", (group_id, user_id, class_id))
+                    flash(f'Added new member: {new_member_email}', 'success')
+                else:
+                    flash(f'User with email {new_member_email} not found', 'danger')
+
+            conn.commit()
+            flash('Group updated successfully', 'success')
+        except sqlite3.IntegrityError:
+            conn.rollback()
+            flash('Integrity error: possibly a duplicate entry', 'danger')
+        except sqlite3.Error as e:
+            conn.rollback()
+            flash(f'Database error: {str(e)}', 'danger')
+        finally:
+            conn.close()
+        
+        return redirect(url_for('edit_group', group_id=group_id))
+
+    else:  # GET request
+        try:
+            # Retrieve group details from the database
+            cursor.execute("SELECT group_name, class_id FROM Groups WHERE group_id = ?", (group_id,))
+            group_details = cursor.fetchone()
+            group_name = group_details['group_name'] if group_details else None
+
+            cursor.execute("""
+                SELECT Users.user_id, Users.email
+                FROM Users
+                INNER JOIN group_members ON Users.user_id = group_members.user_id
+                WHERE group_members.group_id = ?
+            """, (group_id,))
+            group_members = cursor.fetchall()
+        except sqlite3.Error as e:
+            flash(f'Error retrieving group details: {str(e)}', 'danger')
+            group_name = None
+            group_members = []
+        finally:
+            conn.close()
+        
+        return render_template('edit_group.html', group_id=group_id, group_name=group_name, group_members=group_members)
 
 @app.route('/remove_member/<group_id>/<user_id>', methods=['GET'])
 def remove_member(group_id, user_id):
