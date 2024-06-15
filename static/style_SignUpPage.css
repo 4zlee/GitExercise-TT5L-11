@@ -122,3 +122,7 @@ input{
 #app_password_field.show {
     display: flex;
 }
+
+.alert-danger {
+    color: red;
+}
