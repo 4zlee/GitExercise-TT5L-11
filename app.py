@@ -16,28 +16,6 @@ app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 465
 app.config['MAIL_USE_SSL'] = True
 
-def normalize_rating(rating, old_min=0, old_max=5, new_min=0, new_max=3):
-    """
-    Normalize a rating from the old range (old_min, old_max) to the new range (new_min, new_max).
-    
-    Parameters:
-    rating (float): The rating to be normalized.
-    old_min (float): The minimum value of the old range. Default is 0.
-    old_max (float): The maximum value of the old range. Default is 5.
-    new_min (float): The minimum value of the new range. Default is 0.
-    new_max (float): The maximum value of the new range. Default is 3.
-    
-    Returns:
-    float: The normalized rating in the new range.
-    """
-    # Ensure the rating is within the old range
-    if rating < old_min or rating > old_max:
-        raise ValueError(f"Rating {rating} is out of bounds. It should be between {old_min} and {old_max}.")
-    
-    # Normalize the rating
-    normalized_rating = ((rating - old_min) / (old_max - old_min)) * (new_max - new_min) + new_min
-    return normalized_rating
-
 def get_lecturer_email(lecturer_id):
     conn = sqlite3.connect(DATABASE)
     cursor = conn.cursor()
@@ -185,7 +163,12 @@ def select_class():
         if group:
             group_id = group['group_id']
             return redirect(url_for('confirm_group', class_id=class_id, group_id=group_id))
+        else:
+            flash('You are not assigned in any courses, please contact your lecturer', 'danger')
+            return redirect(url_for('select_class', classes=classes))
 
+    if "class_id" not in session:
+            return 'You are not assigned in any courses, please contact your lecturer.'
     conn.close()
     return render_template('select_class.html', classes=classes)
 
@@ -401,10 +384,24 @@ def evaluate_students(class_id, group_id):
                 if key.startswith('rating_'):
                     student_id = key.split('_')[1]
                     evaluation = evaluations[0]  # Get the first item in the list
+                    # Check if evaluation already exists
                     cursor.execute(
-                        "INSERT INTO Evaluate_lect (evaluator_lect_id, evaluated_id, class_id, group_id, rating_lect) "
-                        "VALUES (?, ?, ?, ?, ?)",
-                        (lecturer_id, student_id, class_id, group_id, evaluation))
+                        "SELECT COUNT(*) FROM Evaluate_lect WHERE evaluator_lect_id = ? AND evaluated_id = ? AND class_id = ? AND group_id = ?",
+                        (lecturer_id, student_id, class_id, group_id))
+                    exists = cursor.fetchone()[0]
+
+                    if exists == 0:
+                        cursor.execute(
+                            "INSERT INTO Evaluate_lect (evaluator_lect_id, evaluated_id, class_id, group_id, rating_lect) "
+                            "VALUES (?, ?, ?, ?, ?)",
+                            (lecturer_id, student_id, class_id, group_id, evaluation))
+                    else:
+                        # Update existing evaluation
+                        cursor.execute("""
+                            UPDATE Evaluate_lect
+                            SET rating_lect = ?
+                            WHERE evaluator_lect_id = ? AND evaluated_id = ? AND class_id = ? AND group_id = ?
+                        """, (evaluation, lecturer_id, student_id, class_id, group_id))
             conn.commit()
             flash('Student evaluations submitted successfully', 'success')
         except Exception as e:
@@ -426,12 +423,14 @@ def evaluate_students(class_id, group_id):
             # Retrieve self-evaluations and adjusted ratings
             cursor.execute(
                 "SELECT Users.user_id, Users.name, Evaluate_self.comments_self01, Evaluate_self.comments_self02, "
-                "Evaluate_self.comments_self03, Evaluate_self.comments_self04, Evaluation.adjusted_rating "
+                "Evaluate_self.comments_self03, Evaluate_self.comments_self04, Evaluation.adjusted_rating, "
+                "Evaluate_lect.rating_lect "
                 "FROM Users "
                 "INNER JOIN Evaluate_self ON Users.user_id = Evaluate_self.evaluator_id "
                 "LEFT JOIN Evaluation ON Users.user_id = Evaluation.evaluated_id AND Evaluation.class_id = ? AND Evaluation.group_id = ? "
+                "LEFT JOIN Evaluate_lect ON Users.user_id = Evaluate_lect.evaluated_id AND Evaluate_lect.class_id = ? AND Evaluate_lect.group_id = ? "
                 "WHERE Users.user_id IN (SELECT user_id FROM group_members WHERE class_id = ? AND group_id = ?)",
-                (class_id, group_id, class_id, group_id))
+                (class_id, group_id, class_id, group_id, class_id, group_id))
             evaluations = cursor.fetchall()
 
             # Group evaluations by student name and calculate average adjusted rating
@@ -442,7 +441,8 @@ def evaluate_students(class_id, group_id):
                         'user_id': eval['user_id'],
                         'comments': [eval['comments_self01'], eval['comments_self02'], eval['comments_self03'], eval['comments_self04']],
                         'adjusted_ratings': [],
-                        'average_adjusted_rating': 0
+                        'average_adjusted_rating': 0,
+                        'rating_lect': eval['rating_lect']  # Added rating_lect
                     }
                 if eval['adjusted_rating'] is not None:
                     grouped_evaluations[eval['name']]['adjusted_ratings'].append(eval['adjusted_rating'])
@@ -728,8 +728,6 @@ def signup_post():
     app_password = request.form['app_password']
     email = request.form['email']
     role = request.form['role']
-    class_id = request.form.get('class_id')
-    group_id = request.form.get('group_id')
 
     if not name or not password or not confirm_password:
         flash('All fields are required', 'error')
@@ -759,20 +757,27 @@ def signup_post():
 
     cursor.execute("SELECT role_id FROM Roles WHERE role_name = ?", (role,))
     role_id = cursor.fetchone()['role_id']
-    cursor.execute("INSERT INTO User_roles (user_id, role_id) VALUES (?, ?)", (new_user_id, role_id))
-    conn.commit()
 
-    cursor.execute("INSERT INTO lecturer_app_passwords (lecturer_id, app_password) VALUES (?, ?)", (new_user_id, app_password))
-    conn.commit()
+    if role_id == 2:
 
-    if class_id and group_id:
-        cursor.execute("INSERT INTO group_members (group_id, class_id, user_id) VALUES (?, ?, ?)", (group_id, class_id, new_user_id))
+        cursor.execute("INSERT INTO User_roles (user_id, role_id) VALUES (?, ?)", (new_user_id, role_id))
         conn.commit()
 
-    conn.close()
+        cursor.execute("INSERT INTO lecturer_app_passwords (lecturer_id, app_password) VALUES (?, ?)", (new_user_id, app_password))
+        conn.commit()
 
-    flash('Account created successfully! Please log in.', 'success')
-    return redirect(url_for('login'))
+        print(f'New user ID: ', new_user_id)
+
+    else:
+        cursor.execute("INSERT INTO User_roles (user_id, role_id) VALUES (?, ?)", (new_user_id, role_id))
+        conn.commit()
+
+        print(f'New user ID: ', new_user_id)
+
+        conn.close()
+
+        flash('Account created successfully! Please log in.', 'success')
+        return redirect(url_for('login'))
 
 @app.route('/class_add', methods=['POST', 'GET'])
 def class_add_post():
@@ -788,7 +793,7 @@ def class_add_post():
         existing_class = cursor.fetchone()
 
         if existing_class:
-            flash('Class ID is already in use', 'danger')
+            flash('Course ID is already in use', 'danger')
             return redirect(url_for('class_add_post'))
 
         # Insert new class into the database
@@ -802,7 +807,7 @@ def class_add_post():
 
         conn.close()
 
-        flash('Class created successfully', 'success')
+        flash('Course created successfully', 'success')
         return redirect(url_for('class_add_post'))
 
     # If GET request, render the class add form
@@ -834,10 +839,10 @@ def edit_class(class_id):
             # Update class name in the database
             cursor.execute("UPDATE Classes SET class_name = ? WHERE class_id = ?", (new_class_name, class_id))
             conn.commit()
-            flash('Class updated successfully', 'success')
+            flash('Course updated successfully', 'success')
         except Exception as e:
             conn.rollback()
-            flash(f'Error updating class: {str(e)}', 'danger')
+            flash(f'Error updating course: {str(e)}', 'danger')
         finally:
             conn.close()
         
@@ -871,7 +876,7 @@ def delete_class(class_id):
         cursor.execute("DELETE FROM group_members WHERE class_id = ?", (class_id,))
         cursor.execute("DELETE FROM Evaluation WHERE class_id = ?", (class_id))
         conn.commit()
-        flash('Class successfully remove', 'success')
+        flash('Course successfully remove', 'success')
     except Exception as e:
         conn.rollback()
         flash(f'Error removing class: {str(e)}', 'danger')
@@ -887,7 +892,7 @@ def drop_class(class_id):
         # Delete Class_lecturers from the database
         cursor.execute("DELETE FROM Class_lecturers WHERE class_id = ?", (class_id,))
         conn.commit()
-        flash('Class successfully drop', 'success')
+        flash('Course successfully drop', 'success')
     except Exception as e:
         conn.rollback()
         flash(f'Error dropping class: {str(e)}', 'danger')
@@ -1009,7 +1014,6 @@ def add_students():
                 """, (user_id,))
         classes = cursor.fetchall()  # Fetch all classes
 
-        # Fetch groups from the database (you may need to filter by the selected class)
         cursor.execute("SELECT group_id, group_name FROM Groups")
         groups = cursor.fetchall()
 
@@ -1018,6 +1022,15 @@ def add_students():
         return render_template('add_students.html', lecturer_email= lecturer_email , classes=classes, groups=groups)
     else:
         return redirect(url_for('login'))
+    
+@app.route('/get_groups/<class_id>')
+def get_groups(class_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT group_id, group_name FROM Groups WHERE class_id = ?", (class_id,))
+    groups = cursor.fetchall()
+    conn.close()
+    return jsonify({'groups': [{'group_id': group['group_id'], 'group_name': group['group_name']} for group in groups]})
 
 @app.route('/upload_students', methods=['GET', 'POST'])
 def upload_students():
@@ -1046,7 +1059,8 @@ def upload_students():
                         password = row['password']
                         class_id = row['class_id']
                         class_name = row['class_name']
-
+                        group_name = row['group_name']
+                        
                         print(f'Processing row: Name={name}, Email={email}, Class ID={class_id}, Class Name={class_name}')
 
                         hashed_password = hash_password(password)
@@ -1100,6 +1114,22 @@ def upload_students():
                         if not existing_assignment:
                             # Assign the student to the class
                             cursor.execute("INSERT INTO Student_class (class_id, student_id) VALUES (?, ?)", (class_id, user_id))
+
+                        # Check if the group already exists
+                        cursor.execute("SELECT group_id FROM Groups WHERE class_id = ? AND group_name = ?", (class_id, group_name,))
+                        existing_group = cursor.fetchone()
+
+                        if existing_group:
+                            group_id = existing_group['group_id']
+
+                            cursor.execute("INSERT INTO group_members (user_id, group_id, class_id) VALUES (?, ?, ?)", (user_id, group_id, class_id))
+                        else:
+                            # Insert the class into the Groups table and insert students into the group_members table
+                            group_id = cursor.lastrowid
+                            cursor.execute("INSERT INTO Groups (group_id, class_id, group_name) VALUES (?, ?, ?)", (group_id, class_id, group_name))
+                            cursor.execute("INSERT INTO group_members (user_id, group_id, class_id) VALUES (?, ?, ?)", (user_id, group_id, class_id))
+
+                        print(f'Group ID: {group_id}')
 
                     conn.commit()
                     conn.close()
@@ -1173,7 +1203,7 @@ def group_list():
         cursor = conn.cursor()
         
         cursor.execute("""
-            SELECT Users.user_id, Users.name, Classes.class_id, Classes.class_name, Groups.group_id, Groups.group_name 
+            SELECT Classes.class_id, Classes.class_name, Groups.group_id, Groups.group_name, Users.user_id, Users.name
             FROM Users
             INNER JOIN group_members ON Users.user_id = group_members.user_id
             INNER JOIN Classes ON group_members.class_id = Classes.class_id
@@ -1186,14 +1216,24 @@ def group_list():
                     SELECT role_id FROM Roles WHERE role_name = 'student'
                 )
             )
+            ORDER BY Classes.class_name, Groups.group_name, Users.name
         """, (lecturer_id,))
         group_members_stu = cursor.fetchall()
         conn.close()
         
-        # Debugging
-        print("Fetched students data:", group_members_stu)
+        # Grouping data by class and group
+        grouped_data = {}
+        for class_id, class_name, group_id, group_name, user_id, user_name in group_members_stu:
+            if (class_id, class_name) not in grouped_data:
+                grouped_data[(class_id, class_name)] = {}
+            if (group_id, group_name) not in grouped_data[(class_id, class_name)]:
+                grouped_data[(class_id, class_name)][(group_id, group_name)] = []
+            grouped_data[(class_id, class_name)][(group_id, group_name)].append((user_id, user_name))
         
-        return render_template('group_list.html', group_members_stu=group_members_stu)
+        # Debugging
+        print("Grouped students data:", grouped_data)
+        
+        return render_template('group_list.html', grouped_data=grouped_data)
     else:
         return "No user logged in"
     
@@ -1262,7 +1302,7 @@ def edit_group(group_id):
             class_id = group_details['class_id'] if group_details else None
 
             if class_id is None:
-                flash('Class ID not found for the group', 'danger')
+                flash('Course ID not found for the group', 'danger')
                 return redirect(url_for('edit_group', group_id=group_id))
 
             # Update group name in the database
@@ -1272,8 +1312,19 @@ def edit_group(group_id):
             if new_member_email:
                 cursor.execute("SELECT user_id FROM Users WHERE email = ?", (new_member_email,))
                 user = cursor.fetchone()
+
                 if user:
                     user_id = user['user_id']
+
+                    existing_user_id = user_id
+                    cursor.execute("SELECT group_id FROM group_members WHERE user_id = ? AND class_id = ?", (existing_user_id, class_id))
+                    existing_group = cursor.fetchone()
+
+                    if existing_group:
+                        flash('User is already a member of the group in the provided class', 'warning')
+                        conn.close()
+                        return redirect(url_for('edit_group', group_id=group_id))
+
                     cursor.execute("INSERT INTO group_members (group_id, user_id, class_id) VALUES (?, ?, ?)", (group_id, user_id, class_id))
                     flash(f'Added new member: {new_member_email}', 'success')
                 else:

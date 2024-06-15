@@ -5,7 +5,7 @@
 <html>
 
 <head>
-    <title>Select Class</title>
+    <title>Select Course</title>
 </head>
 
 <nav class="MMU-logo">
@@ -14,14 +14,16 @@
 
 <nav class="wrapper">
 <body>
-    <h1>Select Class</h1>
+    <h1>Select Course</h1>
     <form method="POST" action="{{ url_for('select_class') }}">
-        <label for="class_id">Class:</label>
-        <select name="class_id" required>
-            {% for class in classes %}
-                <option value="{{ class.class_id }}">{{ class.class_name }}</option>
-            {% endfor %}
-        </select>
+        <div class="selection">
+            <label for="class_id">Course:</label>
+            <select name="class_id" required>
+                {% for class in classes %}
+                    <option value="{{ class.class_id }}">{{ class.class_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
         <button class="button">Proceed</button>
 </nav>
     </form>

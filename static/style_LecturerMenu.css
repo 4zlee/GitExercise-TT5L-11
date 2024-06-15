@@ -21,8 +21,10 @@
     top: 0;
     left: 0;
     width: 100%;
+    height: 70px;
+    box-shadow: 30px 0 20px rgb(255, 255, 255);
     padding: 10px 30px;
-    background: transparent;
+    background: white;
     display: flex;
     justify-content: space-evenly;
     z-index: 90;
@@ -47,6 +49,7 @@ body {
     align-items: center;
     min-height: 100vh;
     background: url(PageBg.jpg) no-repeat;
+    background-attachment: fixed;
     background-size: cover;
     background-position: center;
     image-resolution: 1080;
@@ -134,12 +137,13 @@ ul li:hover ul.dropdown_students {
     backdrop-filter: contrast(50%);
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.329);
     border-radius: 40px;
-    margin: 0px;
+    margin-top: 80px;
     padding: 30px 40px;
     /*border: 5px double rgb(37, 106, 255);*/
 }
 
 .add_class h1 {
+    padding-bottom: 15px;
     font-size: 30px;
     text-align: center;
     /*text-decoration: underline;*/
@@ -281,6 +285,7 @@ th{
 
 .email_note {
     padding: 1rem;
+    font-size: 110%;
 }
 
 .btn-primary {
@@ -410,6 +415,7 @@ th{
 }
 
 .evaluate_students {
+    margin-top: 50px;
     min-width:420px;
     width: auto;
     background: rgb(255, 255, 255);
@@ -418,7 +424,6 @@ th{
     backdrop-filter: contrast(50%);
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.329);
     border-radius: 40px;
-    margin: 0px;
     padding: 2rem;
 }
 
@@ -448,4 +453,41 @@ th{
     text-align: left;
     font-size: 14px;
     margin-bottom: 10px;
+}
+
+.alert {
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+}
+
+.alert-success {
+    color: #155724;
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+}
+
+.alert-info {
+    color: #0c5460;
+    background-color: #d1ecf1;
+    border-color: #bee5eb;
+}
+
+.alert-warning {
+    color: #856404;
+    background-color: #fff3cd;
+    border-color: #ffeeba;
+}
+
+.alert-danger {
+    color: #721c24;
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+.box{
+    border: 1px solid black;
+    margin: 10px;
+    padding: 20px;
 }

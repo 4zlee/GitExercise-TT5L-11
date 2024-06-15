@@ -5,7 +5,7 @@
 {% endblock %}
 
 {% block content %}
-    <div class="edit_group">
+    <div class="add_class">
         <h1>Edit Group</h1>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -19,13 +19,13 @@
         {% endwith %}
 
         <form method="POST" action="{{ url_for('edit_group', group_id=group_id) }}">
-            <div class="form-group">
-                <label for="group_name">Group Name</label>
-                <input type="text" name="group_name" class="form-control" id="group_name" value="{{ group_name }}" required>
+            <div class="input">
+                <label for="group_name">Group Name:</label>
+                <input class="input_field" type="text" name="group_name" class="form-control" id="group_name" value="{{ group_name }}" required>
             </div>
-            <div class="form-group">
-                <label for="new_member">Add New Member</label>
-                <input type="email" name="new_member" class="form-control" id="new_member" placeholder="Enter member's email">
+            <div class="input">
+                <label for="new_member">Add New Member:</label>
+                <input class="input_field" type="email" name="new_member" class="form-control" id="new_member" placeholder="Enter member's email">
             </div>
             <h3>Group Members</h3>
             <table class="list-group">

@@ -56,14 +56,13 @@
             <textarea name="comments_self03" placeholder="Enter your comments">{{ evaluation_self_data['comments_self03'] }}</textarea>
             <p>Feedback / other comments on group work</p>
             <textarea name="comments_self04" placeholder="Enter your comments">{{ evaluation_self_data['comments_self04'] }}</textarea>
-        </div>
     </nav> 
+        </div>
+        <button class="button">Submit Ratings</button>
+    <div>
+        <a href="{{ url_for('home_stu') }}" class="btn btn-secondary mt-3">Home</a>
     </div>
-
-    <button class="button">Submit Ratings</button>
-    <button class="button"><a href="{{ url_for('home_stu')}}">Home</a></button>
-    
-    </div>
+</div>
 </form>
 </body>
 </html>

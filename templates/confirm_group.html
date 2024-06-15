@@ -14,8 +14,10 @@
 <nav class="wrapper">
 <body>
     <h1>Confirm Group</h1>
-    <p>Class: {{ class_name }}</p>
-    <p>Group: {{ group_name }}</p>
+    <div class="selection">
+        <p>Course: {{ class_name }}</p>
+        <p>Group: {{ group_name }}</p>
+    </div>
     <form method="POST" action="{{ url_for('confirm_group', class_id=class_id, group_id=group_id) }}">
         <button class="button">Proceed to Evaluation</button> 
     </form>

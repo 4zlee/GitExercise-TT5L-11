@@ -8,28 +8,28 @@
 <title>Student Peer Review</title> 
 
 {% block title %}
-    Choose Class
+    Choose Course
 {% endblock %}
 
 {% block content %}
     <div class="choose_class">
-        <h1>Choose Class</h1>
+        <h1>Choose Course</h1>
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}" role="alert">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}" role="alert">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
 
         <form method="POST" action="{{ url_for('choose_class') }}">
             <div class="form-group">
-                <label for="class_id">Select Class</label>
+                <label for="class_id">Select Course</label>
                 <select name="class_id" id="class_id" class="form-control" required>
-                    <option value="">-- Select Class --</option>
+                    <option value="">-- Select Course --</option>
                     {% for class in classes %}
                         <option value="{{ class['class_id'] }}">{{ class['class_name'] }}</option>
                     {% endfor %}

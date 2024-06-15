@@ -1,30 +1,37 @@
-<!doctype html>
-<html lang="en">
+{% extends 'layout_lect.html' %}
 <meta charset="UTF-8">
-<meta http-equiv="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style_SelectClassPage.css') }}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload Students</title>
-</head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 
-<nav class="MMU-logo">
-    <a href='#' class="logo"><img src="/static/MMUlogo.png" alt="MMU Logo" style="width:50%;height:auto;"></a>
-</nav>
+{% block title %}
+    Import Students
+{% endblock %}
 
-<nav class="wrapper">
-<body>
-    <nav class="message">
-    <h1>Upload Students</h1>
+{% block content %}
+
+<nav class="add_class">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="messages">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <nav class="input">
+    <h1>Import Students</h1>
+    <p>Please make sure that the CSV file contains name, email, password, class_id, class_name, group_name as columns.</p>
     <form action="{{ url_for('upload_students') }}" method="post" enctype="multipart/form-data">
-        <div>
-            <label for="file">CSV file</label>
+        <div class="box">
+            <label for="file">CSV file:</label>
             <input type="file" name="file" id="file" required>
         </div>
     </nav>
-        <button class="button">Upload</button>
+        <button class="btn btn-primary">Import</button>
     </form>
 </nav>    
-</body>
-</html>
+{% endblock %}

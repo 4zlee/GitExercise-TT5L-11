@@ -12,6 +12,7 @@ body {
     justify-content: center;
     min-height: 100vh;
     background: url(LoginBg.jpg) no-repeat;
+    background-attachment: fixed;
     background-size: cover;
     background-position: center;
     image-resolution: 1080;
@@ -42,8 +43,9 @@ body {
 }
 
 .wrapper {
+    margin: 50px;
     width: 820px;
-    height: 800px;
+    height: auto;
     background: white;
     color: black;
     border: 2px solid rgba(255, 255, 255, .2);
@@ -82,11 +84,49 @@ textarea {
     height: 100px;
 }
 
-.scrollable-item {
-    max-height: 600px;
-    overflow-y: auto; 
-    padding: 10px;
-    border: 1px solid #ccc;
-    margin-bottom: 10px;
+.btn-primary {
+    width: 20%;
+    height: 45px;
+    background: transparent;
+    border: none;
+    outline: none;
+    border-radius: 40px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, .1);
+    cursor: pointer;
+    font-size: 16px;
+    color: #333;
+    font-weight: 600;
+    margin: 1rem auto; 
+    display: block;
 }
 
+.alert {
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+}
+
+.alert-success {
+    color: #155724;
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+}
+
+.alert-info {
+    color: #0c5460;
+    background-color: #d1ecf1;
+    border-color: #bee5eb;
+}
+
+.alert-warning {
+    color: #856404;
+    background-color: #fff3cd;
+    border-color: #ffeeba;
+}
+
+.alert-danger {
+    color: #721c24;
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}

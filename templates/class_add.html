@@ -19,7 +19,7 @@ Add course
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
-                <div class="messages">
+                <div class="alert alert-{{ category }}" role="alert">
                     {{ message }}
                 </div>
             {% endfor %}
@@ -28,8 +28,8 @@ Add course
 
     <form action="/class_add" method="post">
         <div class="input">
-            <input class="input_field" type="text" name="class_id" placeholder="Class ID" required maxlength="10" minlength="10">
-            <input class="input_field" type="text" name="class_name" placeholder="Class Name" required>
+            <input class="input_field" type="text" name="class_id" placeholder="Course ID" required maxlength="10" minlength="10">
+            <input class="input_field" type="text" name="class_name" placeholder="Course Name" required>
         </div>
         <div>
             <button type="submit" class="btn">Submit</button>

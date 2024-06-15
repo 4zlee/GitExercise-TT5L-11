@@ -10,8 +10,8 @@
 {% endblock %}
 
 {% block content %}
-<div class="add_student">
-    <h2>Add Group</h2>
+<div class="add_class">
+    <h1>Add Group</h1>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -24,14 +24,17 @@
     {% endwith %}
 
     <form method="POST" action="{{ url_for('add_group') }}">
-        <label for="class_id">Class Name:</label>
-        <select name="class_id" id="class_id">
-            {% for class in classes %}
-                <option value="{{ class.class_id }}">{{ class.class_name }}</option>
-            {% endfor %}
-        </select><br>
-        <input type="text" name="group_name" id="group_name" required placeholder="Group Name"><br><br>
-
+        <div class="form-group">
+            <label for="class_id">Class Name:</label>
+            <select name="class_id" id="class_id">
+                {% for class in classes %}
+                    <option value="{{ class.class_id }}">{{ class.class_name }}</option>
+                {% endfor %}
+            </select><br>
+        </div>
+        <div class="input">
+            <input class="input_field" type="text" name="group_name" id="group_name" required placeholder="Group Name"><br><br>
+        </div>
     
         <button type="submit" class="btn btn-primary">Add Group</button>
     </form>
