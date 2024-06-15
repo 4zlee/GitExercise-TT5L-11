@@ -12,12 +12,12 @@
 </nav>
 
 <body>
-    <nav class="wrapper">
-    <h1>Adjusted Ratings</h1>
+    <div class="wrapper">
+    <h1 class="Welcome">Adjusted Ratings</h1>
     <p><strong>WARNING!</strong> the adjusted rating will change over the course of time.</p>
     <table>
         <tr>
-            <th>Student ID</th>
+            <th>Student Name</th>
             <th>Adjusted Rating</th>
         </tr>
         {% for (evaluator_id, student_id), adjusted_rating in adjusted_ratings.items() %}
@@ -35,6 +35,6 @@
         <button class="button" name="action" value="proceed">Proceed</button>
         <button class="button" name="action" value="re_rate">Re-rate</button>
     </form>
-</nav>
+</div>
 </body>
 </html>

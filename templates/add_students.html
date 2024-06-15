@@ -10,7 +10,7 @@ Invite Student
 {%endblock%}
 
 {% block content %}
-<div class="add_student">
+<div class="add_class">
     <h1>Add Student Email</h2>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -28,22 +28,24 @@ Invite Student
         <input type="hidden" name="lecturer_id" value="{{ session.user_id }}">
         <div class="input">
             <input type="email" class="input_field" id="student_email" name="student_email" required placeholder="Student Email"><br>
-            <label class="class_id">Select Class:</label>
-            <select id="class_id" name="class_id" class="selection_box" required>
-                <option value="">Select a class</option>
-                {% for class in classes %}
-                    <option value="{{ class.class_id }}">{{ class.class_name }}</option>
-                {% endfor %}
-            </select><br>
-
-            <label for="group_id">Select Group:</label>
-            <select id="group_id" name="group_id" class="selection_box" required>
-                <option value="">Select a group</option>
-                {% for group in groups %}
-                    <option value="{{ group.group_id }}">{{ group.group_name }}</option>
-                {% endfor %}
-            </select><br>
         </div>
+            <div class="form-group">
+                <label >Select Course:</label>
+                <select id="class_id" name="class_id" class="selection_box" required>
+                    <option value="">Select a course</option>
+                    {% for class in classes %}
+                        <option value="{{ class.class_id }}">{{ class.class_name }}</option>
+                    {% endfor %}
+                </select><br>
+                <label for="group_id">Select Group:</label>
+                <select id="group_id" name="group_id" class="selection_box" required>
+                    <option value="">Select a group</option>
+                    {% for group in groups %}
+                        <option value="{{ group.group_id }}">{{ group.group_name }}</option>
+                    {% endfor %}
+                </select><br>
+            </div>
+            
         <button type="submit" class="btn btn-primary">Send Email</button>
     </form>
 </div>
