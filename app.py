@@ -8,6 +8,8 @@ import csv
 import io
 import os
 
+print(os.environ.get('VIRTUAL_ENV'))
+
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 
@@ -167,8 +169,6 @@ def select_class():
             flash('You are not assigned in any courses, please contact your lecturer', 'danger')
             return redirect(url_for('select_class', classes=classes))
 
-    if "class_id" not in session:
-            return 'You are not assigned in any courses, please contact your lecturer.'
     conn.close()
     return render_template('select_class.html', classes=classes)
 
