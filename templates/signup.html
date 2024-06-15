@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name ="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign up</title>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style_SignUpPage.css') }}">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
@@ -18,18 +18,24 @@
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
-                        <div class="alert alert-{{ category }}" role="alert">
-                            {{ message }}
-                        </div>
+                        {% if category == 'error' %}
+                            <div class="alert alert-danger" role="alert">
+                                {{ message }}
+                            </div>
+                        {% else %}
+                            <div class="alert alert-{{ category }}" role="alert">
+                                {{ message }}
+                            </div>
+                        {% endif %}
                     {% endfor %}
                 {% endif %}
             {% endwith %}
             <form action="/signup" method="post">
                 <div class="input_field">
-                    <input type="text" name="name" placeholder="Name" required>
+                    <input type="text" name="name" placeholder="Name" value="{{ form_data.name if form_data else '' }}" required>
                 </div>
                 <div class="input_field">
-                    <input type="text" name="email" placeholder="Email" required>
+                    <input type="text" name="email" placeholder="Email" value="{{ form_data.email if form_data else '' }}" required>
                 </div>
                 <div class="input_field">
                     <input type="password" name="password" placeholder="Password" required>
@@ -38,12 +44,12 @@
                     <input type="password" name="confirm_password" placeholder="Confirm password" required>
                 </div>
                 <div class="input_field" id="app_password_field" style="display: none;">
-                    <input type="password" name="app_password" placeholder="App Password">
+                    <input type="password" name="app_password" placeholder="App Password" value="{{ form_data.app_password if form_data else '' }}">
                 </div>
                 <label for="role">Choose a role</label>
                 <select name="role" id="role" class="selection_box" onchange="toggleAppPasswordField()">
-                    <option value="student">Student</option>
-                    <option value="lecturer">Lecturer</option>
+                    <option value="student" {% if form_data and form_data.role == 'student' %}selected{% endif %}>Student</option>
+                    <option value="lecturer" {% if form_data and form_data.role == 'lecturer' %}selected{% endif %}>Lecturer</option>
                 </select>
                 <div class="btn_field">
                     <button type="submit">Sign Up</button>
