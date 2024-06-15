@@ -209,8 +209,8 @@ def evaluate_group(class_id, group_id):
 
     # Fetch self-evaluation data
     cursor.execute("""
-        SELECT * FROM Evaluate_self WHERE evaluator_id = ?
-    """, (user_id,))
+        SELECT * FROM Evaluate_self WHERE evaluator_id = ? AND class_id = ? AND group_id = ?
+    """, (user_id, class_id, group_id,))
     evaluation_self_data = cursor.fetchone()
 
     if request.method == 'POST' and request.form:
