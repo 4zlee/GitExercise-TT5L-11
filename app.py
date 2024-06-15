@@ -994,7 +994,10 @@ def delete_student(user_id, group_id):
         # Delete student from the database
         cursor.execute("DELETE FROM group_members WHERE user_id = ? AND group_id = ?", (user_id, group_id))
         cursor.execute("DELETE FROM Evaluation WHERE evaluator_id = ? AND group_id = ?", (user_id, group_id))
+        cursor.execute("DELETE FROM Evaluation WHERE evaluated_id = ? AND group_id = ?", (user_id, group_id))
         cursor.execute("DELETE FROM Student_class WHERE student_id = ?", (user_id,))
+        cursor.execute("DELETE FROM Evaluate_self WHERE evaluator_id = ? AND group_id = ?", (user_id, group_id))
+        cursor.execute("DELETE FROM Evaluate_lect WHERE evaluated_id = ? AND group_id = ?", (user_id, group_id))
         conn.commit()
         flash('Student successfully removed from class', 'success')
     except Exception as e:
